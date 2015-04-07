@@ -1839,6 +1839,57 @@ namespace EMSManager {
 	}
 
 	void
+	SetupSurfaceRadiationActuators()
+	{
+
+		// SUBROUTINE INFORMATION:
+		//       AUTHOR         Daren Thomas
+		//       DATE WRITTEN   May 2009
+		//       MODIFIED       na
+		//       RE-ENGINEERED  na
+
+		// PURPOSE OF THIS SUBROUTINE:
+		// Setup EMS actuators available for surface long wave radiation coefficients and temperatures
+
+		// METHODOLOGY EMPLOYED:
+		// access public data and loop over it.
+
+		// REFERENCES:
+		// na
+
+		// Using/Aliasing
+		using DataSurfaces::Surface;
+		using DataSurfaces::TotSurfaces;
+
+		// Locals
+		// SUBROUTINE ARGUMENT DEFINITIONS:
+		// na
+
+		// SUBROUTINE PARAMETER DEFINITIONS:
+		// na
+
+		// INTERFACE BLOCK SPECIFICATIONS:
+		// na
+
+		// DERIVED TYPE DEFINITIONS:
+		// na
+
+		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
+		int SurfNum; // local loop index.
+
+		for (SurfNum = 1; SurfNum <= TotSurfaces; ++SurfNum) {
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Sky Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHSky, Surface(SurfNum).EMSValueForExtHSky);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Ground Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHGround, Surface(SurfNum).EMSValueForExtHGround);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Air Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHAir, Surface(SurfNum).EMSValueForExtHAir);
+
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Sky Temperature For Radiation Exchange", "[K]", Surface(SurfNum).EMSOverrideExtTSky, Surface(SurfNum).EMSValueForExtTSky);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Ground Temperature For Radiation Exchange", "[K]", Surface(SurfNum).EMSOverrideExtTGround, Surface(SurfNum).EMSValueForExtTGround);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Air Temperature For Radiation Exchange", "[K]", Surface(SurfNum).EMSOverrideExtTAir, Surface(SurfNum).EMSValueForExtTAir);
+		}
+
+	}
+
+	void
 	SetupSurfaceConstructionActuators()
 	{
 

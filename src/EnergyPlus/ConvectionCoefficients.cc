@@ -433,6 +433,7 @@ namespace ConvectionCoefficients {
 
 	}
 
+	// FIXME:daren-thomas: this is where you add the LWR stuff...
 	void
 	InitExteriorConvectionCoeff(
 		int const SurfNum, // Surface number (in Surface derived type)
@@ -764,6 +765,11 @@ namespace ConvectionCoefficients {
 			}
 
 		}}
+
+		// FIXME:daren-thomas: allow using EMS to override HSky, HGround and HAir
+		if (Surface(SurfNum).EMSOverrideExtHSky) HSky = Surface(SurfNum).EMSValueForExtHSky;
+		if (Surface(SurfNum).EMSOverrideExtHGround) HGround = Surface(SurfNum).EMSValueForExtHGround;
+		if (Surface(SurfNum).EMSOverrideExtHAir) HAir = Surface(SurfNum).EMSValueForExtHAir;
 
 	}
 
