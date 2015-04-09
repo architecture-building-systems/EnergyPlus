@@ -101,6 +101,9 @@ namespace EMSManager {
 	SetupSurfaceConvectionActuators();
 
 	void
+	SetupSurfaceRadiationActuators();
+
+	void
 	SetupSurfaceConstructionActuators();
 
 	void
