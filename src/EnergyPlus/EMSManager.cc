@@ -412,6 +412,7 @@ namespace EMSManager {
 			SetupZoneInfoAsInternalDataAvail();
 			SetupWindowShadingControlActuators();
 			SetupSurfaceConvectionActuators();
+			SetupSurfaceRadiationActuators();
 			SetupSurfaceConstructionActuators();
 			SetupSurfaceOutdoorBoundaryConditionActuators();
 			GetEMSInput();

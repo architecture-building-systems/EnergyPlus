@@ -5865,15 +5865,30 @@ CalcOutsideSurfTemp(
 		// FIXME:daren-thomas: check ralph's stuff, add here
 		if ( Surface( SurfNum ).OSCMPtr == 0 ) {
 			// FIXME:daren-thomas: if the EMS variables are present, we need to override HAirExtSurf, HSkyExtSurf, SkyTemp, TempExt etc....
-			TH11 = ( -CTFConstOutPart( SurfNum ) 
-				   + QRadSWOutAbs( SurfNum ) 
-				   + HcExtSurf( SurfNum ) * TempExt
-				   + HAirExtSurf(SurfNum) * RadAirTemp
-				   + HSkyExtSurf( SurfNum ) * RadSkyTemp 
-				   + HGrdExtSurf(SurfNum) * RadGroundTemp
-				   + construct.CTFCross( 0 ) * TempSurfIn( SurfNum ) 
-				   + construct.CTFSourceOut( 0 ) * QsrcHist( 1, SurfNum ) ) 
-				 / ( construct.CTFOutside( 0 ) + HcExtSurf( SurfNum ) + HAirExtSurf( SurfNum ) + HSkyExtSurf( SurfNum ) + HGrdExtSurf( SurfNum ) ); // ODB used to approx ground surface temp
+
+			if (Surface(SurfNum).EMSOverrideExtTSky || Surface(SurfNum).EMSOverrideExtTAir || Surface(SurfNum).EMSOverrideExtTGround)
+			{
+				TH11 = (-CTFConstOutPart(SurfNum)
+					+ QRadSWOutAbs(SurfNum)
+					+ HcExtSurf(SurfNum) * TempExt
+					+ HAirExtSurf(SurfNum) * RadAirTemp
+					+ HSkyExtSurf(SurfNum) * RadSkyTemp
+					+ HGrdExtSurf(SurfNum) * RadGroundTemp
+					+ construct.CTFCross(0) * TempSurfIn(SurfNum)
+					+ construct.CTFSourceOut(0) * QsrcHist(1, SurfNum))
+					/ (construct.CTFOutside(0) + HcExtSurf(SurfNum) + HAirExtSurf(SurfNum) + HSkyExtSurf(SurfNum) + HGrdExtSurf(SurfNum)); // ODB used to approx ground surface temp
+			}
+			else
+			{
+				TH11 = (-CTFConstOutPart(SurfNum)
+					+ QRadSWOutAbs(SurfNum)
+					+ (HcExtSurf(SurfNum) + HAirExtSurf(SurfNum)) * TempExt
+					+ HSkyExtSurf(SurfNum) * SkyTemp
+					+ HGrdExtSurf(SurfNum) * OutDryBulbTemp
+					+ construct.CTFCross(0) * TempSurfIn(SurfNum)
+					+ construct.CTFSourceOut(0) * QsrcHist(1, SurfNum))
+					/ (construct.CTFOutside(0) + HcExtSurf(SurfNum) + HAirExtSurf(SurfNum) + HSkyExtSurf(SurfNum) + HGrdExtSurf(SurfNum)); // ODB used to approx ground surface temp
+			}
 			// Outside Heat Balance case: Other Side Conditions Model
 		} else { //( Surface(SurfNum)%OSCMPtr > 0 ) THEN
 			// local copies of variables for clarity in radiation terms
