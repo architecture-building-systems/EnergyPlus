@@ -767,9 +767,9 @@ namespace ConvectionCoefficients {
 		}}
 
 		// FIXME:daren-thomas: allow using EMS to override HSky, HGround and HAir
-		if (Surface(SurfNum).EMSOverrideExtHSky) HSky = Surface(SurfNum).EMSValueForExtHSky;
-		if (Surface(SurfNum).EMSOverrideExtHGround) HGround = Surface(SurfNum).EMSValueForExtHGround;
-		if (Surface(SurfNum).EMSOverrideExtHAir) HAir = Surface(SurfNum).EMSValueForExtHAir;
+		if (Surface(SurfNum).EMSOverrideExtHEnv) HSky = Surface(SurfNum).EMSValueForExtHEnv;
+		if (Surface(SurfNum).EMSOverrideExtHEnv) HGround = Surface(SurfNum).EMSValueForExtHEnv;
+		if (Surface(SurfNum).EMSOverrideExtHEnv) HAir = Surface(SurfNum).EMSValueForExtHEnv;
 
 	}
 

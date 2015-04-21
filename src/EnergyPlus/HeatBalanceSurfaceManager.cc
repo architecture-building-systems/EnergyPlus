@@ -5801,9 +5801,9 @@ CalcOutsideSurfTemp(
 	// FIXME:daren-thomas: temperatures used for longwave radiation purposes
 	// (possibly overriden by EMS)
 	// these temperatures are *only* used for radiation. The TempExt is used for conduction!
-	Real64 RadSkyTemp = Surface(SurfNum).EMSOverrideExtTSky ? Surface(SurfNum).EMSValueForExtTSky : SkyTemp;
-	Real64 RadGroundTemp = Surface(SurfNum).EMSOverrideExtTGround ? Surface(SurfNum).EMSValueForExtTGround : OutDryBulbTemp;
-	Real64 RadAirTemp = Surface(SurfNum).EMSOverrideExtTAir ? Surface(SurfNum).EMSValueForExtTAir : TempExt;
+	Real64 RadSkyTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : SkyTemp;
+	Real64 RadGroundTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : OutDryBulbTemp;
+	Real64 RadAirTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : TempExt;
 
 	// FLOW:
 
@@ -5866,7 +5866,7 @@ CalcOutsideSurfTemp(
 		if ( Surface( SurfNum ).OSCMPtr == 0 ) {
 			// FIXME:daren-thomas: if the EMS variables are present, we need to override HAirExtSurf, HSkyExtSurf, SkyTemp, TempExt etc....
 
-			if (Surface(SurfNum).EMSOverrideExtTSky || Surface(SurfNum).EMSOverrideExtTAir || Surface(SurfNum).EMSOverrideExtTGround)
+			if (Surface(SurfNum).EMSOverrideExtTEnv)
 			{
 				TH11 = (-CTFConstOutPart(SurfNum)
 					+ QRadSWOutAbs(SurfNum)

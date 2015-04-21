@@ -1879,13 +1879,8 @@ namespace EMSManager {
 		int SurfNum; // local loop index.
 
 		for (SurfNum = 1; SurfNum <= TotSurfaces; ++SurfNum) {
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Sky Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHSky, Surface(SurfNum).EMSValueForExtHSky);
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Ground Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHGround, Surface(SurfNum).EMSValueForExtHGround);
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Air Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHAir, Surface(SurfNum).EMSValueForExtHAir);
-
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Sky Temperature For Radiation Exchange", "[C]", Surface(SurfNum).EMSOverrideExtTSky, Surface(SurfNum).EMSValueForExtTSky);
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Ground Temperature For Radiation Exchange", "[C]", Surface(SurfNum).EMSOverrideExtTGround, Surface(SurfNum).EMSValueForExtTGround);
-			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Air Temperature For Radiation Exchange", "[C]", Surface(SurfNum).EMSOverrideExtTAir, Surface(SurfNum).EMSValueForExtTAir);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Environment Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHEnv, Surface(SurfNum).EMSValueForExtHEnv);
+			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Environment Temperature For Radiation Exchange", "[C]", Surface(SurfNum).EMSOverrideExtTEnv, Surface(SurfNum).EMSValueForExtTEnv);
 		}
 
 	}

@@ -473,22 +473,12 @@ namespace DataSurfaces {
 		bool EMSOverrideExtConvCoef; // if true, EMS is calling to override exterior convection coefficeint
 		Real64 EMSValueForExtConvCoef; // Value EMS is calling to use for exterior convection coefficient [W/m2-K]
 
-		// FIXME:daren-thomas: allow overriding of LWR coefficient and Tenv
-		// the following EMS hooks allow overriding the values for HSky, HGround, HAir, TSky, TAir and TGround
-		// for the calculation of long wave radiation exchange between the surface and its surroundings.
-		bool EMSOverrideExtHSky;  // [W/m2-K]
-		bool EMSOverrideExtHGround;
-		bool EMSOverrideExtHAir;
-		bool EMSOverrideExtTSky;  // [K]
-		bool EMSOverrideExtTAir;
-		bool EMSOverrideExtTGround;
+		// FIXME:daren-thomas: allow overriding of LWR coefficient and Tenv		
+		bool EMSOverrideExtHEnv;
+		bool EMSOverrideExtTEnv;
 		
-		Real64 EMSValueForExtHSky;
-		Real64 EMSValueForExtHGround;
-		Real64 EMSValueForExtHAir;
-		Real64 EMSValueForExtTSky;
-		Real64 EMSValueForExtTAir;
-		Real64 EMSValueForExtTGround;
+		Real64 EMSValueForExtHEnv; // [W/m2-K]
+		Real64 EMSValueForExtTEnv; // [C]
 		
 
 		Real64 ViewFactorGround; // View factor to the ground from the exterior of the surface
@@ -631,18 +621,10 @@ namespace DataSurfaces {
 			EMSOverrideExtConvCoef( false ),
 			EMSValueForExtConvCoef( 0.0 ),
 			// FIXME:daren-thomas: overrides for the LWR EMS part
-			EMSOverrideExtHSky( false ),
-			EMSOverrideExtHGround( false ),
-			EMSOverrideExtHAir( false ),
-			EMSOverrideExtTSky( false ),
-			EMSOverrideExtTAir( false ),
-			EMSOverrideExtTGround( false ),
-			EMSValueForExtHSky( 0.0 ),
-			EMSValueForExtHGround( 0.0 ),
-			EMSValueForExtHAir( 0.0 ),
-			EMSValueForExtTSky(0.0),
-			EMSValueForExtTAir(0.0),
-			EMSValueForExtTGround(0.0),
+			EMSOverrideExtHEnv( false ),
+			EMSOverrideExtTEnv( false ),
+			EMSValueForExtHEnv( 0.0 ),
+			EMSValueForExtTEnv(0.0),
 			ViewFactorGround( 0.0 ),
 			ViewFactorSky( 0.0 ),
 			ViewFactorGroundIR( 0.0 ),
@@ -767,19 +749,11 @@ namespace DataSurfaces {
 			Real64 const EMSValueForExtConvCoef, // Value EMS is calling to use for exterior convection coefficient [W/m2-K]
 
 			// FIXME:daren-thomas: LWR stuff
-			bool EMSOverrideExtHSky, // if true, EMS is calling to override exterior sky radiation coefficeint
-			bool EMSOverrideExtHGround, // if true, EMS is calling to override exterior ground radiation coefficeint
-			bool EMSOverrideExtHAir, // if true, EMS is calling to override exterior air radiation coefficeint
-			bool EMSOverrideExtTSky, // if true, EMS is calling to override sky temperature for radiation exchange calculation
-			bool EMSOverrideExtTGround, // if true, EMS is calling to override ground temperature for radiation exchange calculation
-			bool EMSOverrideExtTAir, // if true, EMS is calling to override air temperature for radiation exchange calculation			
+			bool EMSOverrideExtHEnv, // if true, EMS is calling to override exterior environment radiation coefficeint
+			bool EMSOverrideExtTEnv, // if true, EMS is calling to override environment temperature for radiation exchange calculation
 
-			Real64 EMSValueForExtHSky,  // Value EMS is calling to use for exterior sky radiation coefficeint [W/m2-K]
-			Real64 EMSValueForExtHGround, // Value EMS is calling to use for exterior ground radiation coefficeint [W/m2-K]
-			Real64 EMSValueForExtHAir, // Value EMS is calling to use for exterior air radiation coefficeint [W/m2-K]
-			Real64 EMSValueForExtTSky, // Value EMS is calling to use for sky temperature for radiation exchange calculation [K]
-			Real64 EMSValueForExtTGround, // Value EMS is calling to use for ground temperature for radiation exchange calculation [K]
-			Real64 EMSValueForExtTAir, // Value EMS is calling to use for iar temperature for radiation exchange calculation [K]
+			Real64 EMSValueForExtHEnv,  // Value EMS is calling to use for exterior environment radiation coefficeint [W/m2-K]
+			Real64 EMSValueForExtTEnv, // Value EMS is calling to use for sky temperature for radiation exchange calculation [K]
 
 			Real64 const ViewFactorGround, // View factor to the ground from the exterior of the surface
 			Real64 const ViewFactorSky, // View factor to the sky from the exterior of the surface
@@ -903,19 +877,11 @@ namespace DataSurfaces {
 			EMSValueForExtConvCoef( EMSValueForExtConvCoef ),
 
 			// FIXME:daren-thomas: LWR stuff
-			EMSOverrideExtHSky(EMSOverrideExtHSky),
-			EMSOverrideExtHGround(EMSOverrideExtHGround),
-			EMSOverrideExtHAir(EMSOverrideExtHAir),
-			EMSOverrideExtTSky(EMSOverrideExtTSky),
-			EMSOverrideExtTGround(EMSOverrideExtTGround),
-			EMSOverrideExtTAir(EMSOverrideExtTAir),
+			EMSOverrideExtHEnv(EMSOverrideExtHEnv),			
+			EMSOverrideExtTEnv(EMSOverrideExtTEnv),
 
-			EMSValueForExtHSky(EMSValueForExtHSky),
-			EMSValueForExtHGround(EMSValueForExtHGround),
-			EMSValueForExtHAir(EMSValueForExtHAir),
-			EMSValueForExtTSky(EMSValueForExtTSky),
-			EMSValueForExtTGround(EMSValueForExtTGround),
-			EMSValueForExtTAir(EMSValueForExtTAir),
+			EMSValueForExtHEnv(EMSValueForExtHEnv),
+			EMSValueForExtTEnv(EMSValueForExtTEnv),
 
 			ViewFactorGround( ViewFactorGround ),
 			ViewFactorSky( ViewFactorSky ),
