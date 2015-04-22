@@ -767,10 +767,19 @@ namespace ConvectionCoefficients {
 		}}
 
 		// FIXME:daren-thomas: allow using EMS to override HSky, HGround and HAir
-		if (Surface(SurfNum).EMSOverrideExtHEnv) HSky = Surface(SurfNum).EMSValueForExtHEnv;
-		if (Surface(SurfNum).EMSOverrideExtHEnv) HGround = Surface(SurfNum).EMSValueForExtHEnv;
-		if (Surface(SurfNum).EMSOverrideExtHEnv) HAir = Surface(SurfNum).EMSValueForExtHEnv;
-
+		if (Surface(SurfNum).EMSOverrideExtHEnv)
+		{
+			HSky = Surface(SurfNum).ViewFactorSkyIR * AirSkyRadSplit(SurfNum) * Surface(SurfNum).EMSValueForExtHEnv;
+			HGround = Surface(SurfNum).ViewFactorGroundIR * Surface(SurfNum).EMSValueForExtHEnv;
+			HAir = Surface(SurfNum).ViewFactorSkyIR * (1.0 - AirSkyRadSplit(SurfNum)) * Surface(SurfNum).EMSValueForExtHEnv;
+		}
+		else if (Surface(SurfNum).EMSOverrideExtTEnv)
+		{
+			const Real64 TEnv(Surface(SurfNum).EMSValueForExtTEnv);
+			HSky = StefanBoltzmann * AbsExt * Surface(SurfNum).ViewFactorSkyIR * AirSkyRadSplit(SurfNum) * (pow_4(TSurf) - pow_4(TEnv)) / (TSurf - TEnv);
+			HGround = StefanBoltzmann * AbsExt * Surface(SurfNum).ViewFactorGroundIR * (pow_4(TSurf) - pow_4(TEnv)) / (TSurf - TEnv);
+			HAir = StefanBoltzmann * AbsExt * Surface(SurfNum).ViewFactorSkyIR * (1.0 - AirSkyRadSplit(SurfNum)) * (pow_4(TSurf) - pow_4(TEnv)) / (TSurf - TEnv);
+		}		
 	}
 
 	Real64
