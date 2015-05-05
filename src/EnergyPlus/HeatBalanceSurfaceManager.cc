@@ -1347,6 +1347,11 @@ namespace HeatBalanceSurfaceManager {
 				SetupOutputVariable( "Surface Outside Face Thermal Radiation to Air Heat Transfer Coefficient [W/m2-K]", HAirExtSurf( loop ), "Zone", "State", Surface( loop ).Name );
 				SetupOutputVariable( "Surface Outside Face Thermal Radiation to Sky Heat Transfer Coefficient [W/m2-K]", HSkyExtSurf( loop ), "Zone", "State", Surface( loop ).Name );
 				SetupOutputVariable( "Surface Outside Face Thermal Radiation to Ground Heat Transfer Coefficient [W/m2-K]", HGrdExtSurf( loop ), "Zone", "State", Surface( loop ).Name );
+
+				// FIXME:daren-thomas: output the values received from FMI
+				SetupOutputVariable("Exterior Surface Environment Radiation Coefficient [W/m2-K]", Surface(loop).EMSValueForExtHEnv, "Zone", "State", Surface(loop).Name);				
+				SetupOutputVariable("Exterior Surface Environment Temperature For Radiation Exchange [C]", Surface(loop).EMSValueForExtTEnv, "Zone", "State", Surface(loop).Name);				
+
 				if ( Surface( loop ).Class != SurfaceClass_Window ) {
 					SetupOutputVariable( "Surface Outside Face Solar Radiation Heat Gain Rate [W]", SWOutAbsTotalReport( loop ), "Zone", "Average", Surface( loop ).Name );
 					SetupOutputVariable( "Surface Outside Face Solar Radiation Heat Gain Rate per Area [W/m2]", QRadSWOutAbs( loop ), "Zone", "Average", Surface( loop ).Name );
