@@ -1349,8 +1349,8 @@ namespace HeatBalanceSurfaceManager {
 				SetupOutputVariable( "Surface Outside Face Thermal Radiation to Ground Heat Transfer Coefficient [W/m2-K]", HGrdExtSurf( loop ), "Zone", "State", Surface( loop ).Name );
 
 				// FIXME:daren-thomas: output the values received from FMI
-				SetupOutputVariable("Exterior Surface Environment Radiation Coefficient [W/m2-K]", Surface(loop).EMSValueForExtHEnv, "Zone", "State", Surface(loop).Name);				
-				SetupOutputVariable("Exterior Surface Environment Temperature For Radiation Exchange [C]", Surface(loop).EMSValueForExtTEnv, "Zone", "State", Surface(loop).Name);				
+				SetupOutputVariable("Exterior Surface Environment Radiation Coefficient [W/m2-K]", Surface(loop).EMSValueForExtHEnv, "Zone", "State", Surface(loop).Name);	
+				SetupOutputVariable("Exterior Surface Environment Temperature For Radiation Exchange [C]", Surface(loop).EMSValueForExtTEnv, "Zone", "State", Surface(loop).Name);
 
 				if ( Surface( loop ).Class != SurfaceClass_Window ) {
 					SetupOutputVariable( "Surface Outside Face Solar Radiation Heat Gain Rate [W]", SWOutAbsTotalReport( loop ), "Zone", "Average", Surface( loop ).Name );
@@ -1428,8 +1428,7 @@ namespace HeatBalanceSurfaceManager {
 		for ( loop = 1; loop <= NumOfZones; ++loop ) {
 			//CurrentModuleObject='Zone'
 			SetupOutputVariable( "Zone Mean Radiant Temperature [C]", ZoneMRT( loop ), "Zone", "State", Zone( loop ).Name );
-		}
-
+		}		
 	}
 
 	void
@@ -5806,8 +5805,10 @@ CalcOutsideSurfTemp(
 	// FIXME:daren-thomas: temperatures used for longwave radiation purposes
 	// (possibly overriden by EMS)
 	// these temperatures are *only* used for radiation. The TempExt is used for conduction!
-	Real64 RadSkyTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : SkyTemp;
-	Real64 RadGroundTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : OutDryBulbTemp;
+	Real64 TGround = EMSExtTGroundOverrideOn ? EMSExtTGroundOverrideValue : OutDryBulbTemp;
+	Real64 TSky = EMSExtTSkyOverrideOn ? EMSExtTSkyOverrideValue : SkyTemp;
+	Real64 RadSkyTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : TSky;
+	Real64 RadGroundTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : TGround;
 	Real64 RadAirTemp = Surface(SurfNum).EMSOverrideExtTEnv ? Surface(SurfNum).EMSValueForExtTEnv : TempExt;
 
 	// FLOW:
@@ -5871,7 +5872,7 @@ CalcOutsideSurfTemp(
 		if ( Surface( SurfNum ).OSCMPtr == 0 ) {
 			// FIXME:daren-thomas: if the EMS variables are present, we need to override HAirExtSurf, HSkyExtSurf, SkyTemp, TempExt etc....
 
-			if (Surface(SurfNum).EMSOverrideExtTEnv)
+			if (Surface(SurfNum).EMSOverrideExtTEnv) // slight differences due to floating point arithmetic require this if-test for comparing the results...
 			{
 				TH11 = (-CTFConstOutPart(SurfNum)
 					+ QRadSWOutAbs(SurfNum)
@@ -5889,7 +5890,7 @@ CalcOutsideSurfTemp(
 					+ QRadSWOutAbs(SurfNum)
 					+ (HcExtSurf(SurfNum) + HAirExtSurf(SurfNum)) * TempExt
 					+ HSkyExtSurf(SurfNum) * SkyTemp
-					+ HGrdExtSurf(SurfNum) * OutDryBulbTemp
+					+ HGrdExtSurf(SurfNum) * TGround
 					+ construct.CTFCross(0) * TempSurfIn(SurfNum)
 					+ construct.CTFSourceOut(0) * QsrcHist(1, SurfNum))
 					/ (construct.CTFOutside(0) + HcExtSurf(SurfNum) + HAirExtSurf(SurfNum) + HSkyExtSurf(SurfNum) + HGrdExtSurf(SurfNum)); // ODB used to approx ground surface temp

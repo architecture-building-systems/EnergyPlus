@@ -518,6 +518,10 @@ namespace WeatherManager {
 			SetupOutputVariable( "Site Day Type Index []", RptDayType, "Zone", "State", "Environment" );
 			SetupOutputVariable( "Site Mains Water Temperature [C]", WaterMainsTemp, "Zone", "Average", "Environment" );
 
+			// FIXME:daren-thomas: output the TGround override for LWR exchange
+			SetupOutputVariable("Ground Temperature For Radiation Exchange [C]", EMSExtTGroundOverrideValue, "Zone", "Average", "Environment");
+			SetupOutputVariable("Sky Temperature For Radiation Exchange [C]", EMSExtTSkyOverrideValue, "Zone", "Average", "Environment");
+
 			if ( AnyEnergyManagementSystemInModel ) {
 				SetupEMSActuator( "Weather Data", "Environment", "Outdoor Dry Bulb", "[C]", EMSOutDryBulbOverrideOn, EMSOutDryBulbOverrideValue );
 				SetupEMSActuator( "Weather Data", "Environment", "Outdoor Dew Point", "[C]", EMSOutDewPointTempOverrideOn, EMSOutDewPointTempOverrideValue );

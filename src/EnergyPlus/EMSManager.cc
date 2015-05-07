@@ -12,6 +12,7 @@
 #include <CommandLineInterface.hh>
 #include <DataAirLoop.hh>
 #include <DataAirSystems.hh>
+#include <DataEnvironment.hh>
 #include <DataGlobals.hh>
 #include <DataStringGlobals.hh>
 #include <DataHeatBalance.hh>
@@ -1882,7 +1883,10 @@ namespace EMSManager {
 			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Environment Radiation Coefficient", "[W/m2-K]", Surface(SurfNum).EMSOverrideExtHEnv, Surface(SurfNum).EMSValueForExtHEnv);
 			SetupEMSActuator("Surface", Surface(SurfNum).Name, "Exterior Surface Environment Temperature For Radiation Exchange", "[C]", Surface(SurfNum).EMSOverrideExtTEnv, Surface(SurfNum).EMSValueForExtTEnv);
 		}
-
+		SetupEMSActuator("Weather Data", "Environment", "Ground Temperature For Radiation Exchange", "[C]", 
+			EnergyPlus::DataEnvironment::EMSExtTGroundOverrideOn, EnergyPlus::DataEnvironment::EMSExtTGroundOverrideValue);
+		SetupEMSActuator("Weather Data", "Environment", "Sky Temperature For Radiation Exchange", "[C]",
+			EnergyPlus::DataEnvironment::EMSExtTGroundOverrideOn, EnergyPlus::DataEnvironment::EMSExtTGroundOverrideValue);
 	}
 
 	void

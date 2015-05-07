@@ -95,6 +95,13 @@ namespace DataEnvironment {
 	Real64 OutDryBulbTemp; // Current outdoor air dry bulb temperature
 	bool EMSOutDryBulbOverrideOn( false ); // EMS flag for outdoor air dry bulb temperature
 	Real64 EMSOutDryBulbOverrideValue; // EMS override value for outdoor air dry bulb temperature
+
+	// FIXME:daren-thomas: this is used for overriding the TGround value used in LWR calculations
+	bool EMSExtTGroundOverrideOn(false);
+	Real64 EMSExtTGroundOverrideValue(0.0);
+	bool EMSExtTSkyOverrideOn(false);
+	Real64 EMSExtTSkyOverrideValue(0.0);
+
 	Real64 OutHumRat; // Current outdoor air humidity ratio
 	Real64 OutRelHum; // Current outdoor relative humidity [%]
 	Real64 OutRelHumValue; // Current outdoor relative humidity value [0.0-1.0]

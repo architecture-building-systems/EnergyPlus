@@ -625,6 +625,7 @@ namespace DataSurfaces {
 			EMSOverrideExtTEnv( false ),
 			EMSValueForExtHEnv( 0.0 ),
 			EMSValueForExtTEnv(0.0),
+
 			ViewFactorGround( 0.0 ),
 			ViewFactorSky( 0.0 ),
 			ViewFactorGroundIR( 0.0 ),
@@ -753,7 +754,8 @@ namespace DataSurfaces {
 			bool EMSOverrideExtTEnv, // if true, EMS is calling to override environment temperature for radiation exchange calculation
 
 			Real64 EMSValueForExtHEnv,  // Value EMS is calling to use for exterior environment radiation coefficeint [W/m2-K]
-			Real64 EMSValueForExtTEnv, // Value EMS is calling to use for sky temperature for radiation exchange calculation [K]
+			Real64 EMSValueForExtTEnv, // Value EMS is calling to use for environment temperature for radiation exchange calculation [C]
+			Real64 EMSValueForExtTGround, // Value EMS is calling to use for ground temperature for radiation exchange calculation [C] (ignored if EMSOverrideExtTEnv is set)
 
 			Real64 const ViewFactorGround, // View factor to the ground from the exterior of the surface
 			Real64 const ViewFactorSky, // View factor to the sky from the exterior of the surface
