@@ -1886,7 +1886,7 @@ namespace EMSManager {
 		SetupEMSActuator("Weather Data", "Environment", "Ground Temperature For Radiation Exchange", "[C]", 
 			EnergyPlus::DataEnvironment::EMSExtTGroundOverrideOn, EnergyPlus::DataEnvironment::EMSExtTGroundOverrideValue);
 		SetupEMSActuator("Weather Data", "Environment", "Sky Temperature For Radiation Exchange", "[C]",
-			EnergyPlus::DataEnvironment::EMSExtTGroundOverrideOn, EnergyPlus::DataEnvironment::EMSExtTGroundOverrideValue);
+			EnergyPlus::DataEnvironment::EMSExtTSkyOverrideOn, EnergyPlus::DataEnvironment::EMSExtTSkyOverrideValue);
 	}
 
 	void
