@@ -9,7 +9,7 @@
 //
 // Language: C++
 //
-// Copyright (c) 2000-2014 Objexx Engineering, Inc. All Rights Reserved.
+// Copyright (c) 2000-2015 Objexx Engineering, Inc. All Rights Reserved.
 // Use of this source code or any derivative of it is restricted by license.
 // Licensing is available from Objexx Engineering, Inc.:  http://objexx.com
 
@@ -33,7 +33,7 @@ private: // Friend
 
 public: // Types
 
-	typedef  typename Super::Array  Array;
+	typedef  typename Super::ArrayType  ArrayType;
 	typedef  typename Super::Class  Class;
 	typedef  typename Super::MPtr  MPtr;
 	typedef  typename Super::Traits  Traits;
@@ -100,11 +100,11 @@ public: // Assignment: Array
 	{
 		if ( this != &a ) {
 			assert( conformable( a ) );
-			for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-				for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+			for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+				for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 					for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-						for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-							for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+						for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+							for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 								operator ()( i1, i2, i3, i4, i5 ) = a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 							}
 						}
@@ -122,11 +122,11 @@ public: // Assignment: Array
 	operator =( MArray5< Aa, Ta > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) = a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
 					}
@@ -137,17 +137,17 @@ public: // Assignment: Array
 	}
 
 	// Array Assignment Template
-	template< template< typename > class ArrayType, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
+	template< template< typename > class Ar, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
 	inline
 	MArray5 &
-	operator =( ArrayType< U > const & a )
+	operator =( Ar< U > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
-			for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+		for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+			for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
 				for ( int i3 = 1, j3 = a.l3(), e3 = u3(); i3 <= e3; ++i3, ++j3 ) {
-					for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
-						for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+					for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+						for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) = a( j1, j2, j3, j4, j5 ); // Not overlap-safe
 						}
 					}
@@ -164,11 +164,11 @@ public: // Assignment: Array
 	operator +=( MArray5< Aa, Ta > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) += a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
 					}
@@ -185,11 +185,11 @@ public: // Assignment: Array
 	operator -=( MArray5< Aa, Ta > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) -= a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
 					}
@@ -206,11 +206,11 @@ public: // Assignment: Array
 	operator *=( MArray5< Aa, Ta > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) *= a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
 					}
@@ -227,11 +227,11 @@ public: // Assignment: Array
 	operator /=( MArray5< Aa, Ta > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							assert( a( i1, i2, i3, i4, i5 ) != T( 0 ) );
 							operator ()( i1, i2, i3, i4, i5 ) /= a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
@@ -243,17 +243,17 @@ public: // Assignment: Array
 	}
 
 	// += Array Template
-	template< template< typename > class ArrayType, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
+	template< template< typename > class Ar, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
 	inline
 	MArray5 &
-	operator +=( ArrayType< U > const & a )
+	operator +=( Ar< U > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
-			for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+		for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+			for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
 				for ( int i3 = 1, j3 = a.l3(), e3 = u3(); i3 <= e3; ++i3, ++j3 ) {
-					for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
-						for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+					for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+						for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) += a( j1, j2, j3, j4, j5 ); // Not overlap-safe
 						}
 					}
@@ -264,17 +264,17 @@ public: // Assignment: Array
 	}
 
 	// -= Array Template
-	template< template< typename > class ArrayType, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
+	template< template< typename > class Ar, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
 	inline
 	MArray5 &
-	operator -=( ArrayType< U > const & a )
+	operator -=( Ar< U > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
-			for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+		for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+			for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
 				for ( int i3 = 1, j3 = a.l3(), e3 = u3(); i3 <= e3; ++i3, ++j3 ) {
-					for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
-						for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+					for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+						for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) -= a( j1, j2, j3, j4, j5 ); // Not overlap-safe
 						}
 					}
@@ -285,17 +285,17 @@ public: // Assignment: Array
 	}
 
 	// *= Array Template
-	template< template< typename > class ArrayType, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
+	template< template< typename > class Ar, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
 	inline
 	MArray5 &
-	operator *=( ArrayType< U > const & a )
+	operator *=( Ar< U > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
-			for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+		for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+			for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
 				for ( int i3 = 1, j3 = a.l3(), e3 = u3(); i3 <= e3; ++i3, ++j3 ) {
-					for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
-						for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+					for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+						for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) *= a( j1, j2, j3, j4, j5 ); // Not overlap-safe
 						}
 					}
@@ -306,17 +306,17 @@ public: // Assignment: Array
 	}
 
 	// /= Array Template
-	template< template< typename > class ArrayType, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
+	template< template< typename > class Ar, typename U, class = typename std::enable_if< std::is_assignable< T&, U >::value >::type >
 	inline
 	MArray5 &
-	operator /=( ArrayType< U > const & a )
+	operator /=( Ar< U > const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
-			for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+		for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+			for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
 				for ( int i3 = 1, j3 = a.l3(), e3 = u3(); i3 <= e3; ++i3, ++j3 ) {
-					for ( int i2 = 1, j2 = a.l2(), e2 = u2(); i2 <= e2; ++i2, ++j2 ) {
-						for ( int i1 = 1, j1 = a.l1(), e1 = u1(); i1 <= e1; ++i1, ++j1 ) {
+					for ( int i4 = 1, j4 = a.l4(), e4 = u4(); i4 <= e4; ++i4, ++j4 ) {
+						for ( int i5 = 1, j5 = a.l5(), e5 = u5(); i5 <= e5; ++i5, ++j5 ) {
 							assert( a( j1, j2, j3, j4, j5 ) != T( 0 ) );
 							operator ()( i1, i2, i3, i4, i5 ) /= a( j1, j2, j3, j4, j5 ); // Not overlap-safe
 						}
@@ -336,11 +336,11 @@ public: // Assignment: Logical
 	and_equals( MArray5 const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							auto & v( operator ()( i1, i2, i3, i4, i5 ) );
 							v = v && a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
@@ -358,11 +358,11 @@ public: // Assignment: Logical
 	or_equals( MArray5 const & a )
 	{
 		assert( conformable( a ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							auto & v( operator ()( i1, i2, i3, i4, i5 ) );
 							v = v || a( i1, i2, i3, i4, i5 ); // Not overlap-safe
 						}
@@ -380,11 +380,11 @@ public: // Assignment: Value
 	MArray5 &
 	operator =( T const & t )
 	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) = t;
 						}
 					}
@@ -400,11 +400,11 @@ public: // Assignment: Value
 	MArray5 &
 	operator =( U const & t )
 	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) = t;
 						}
 					}
@@ -419,11 +419,11 @@ public: // Assignment: Value
 	MArray5 &
 	operator +=( T const & t )
 	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) += t;
 						}
 					}
@@ -438,11 +438,11 @@ public: // Assignment: Value
 	MArray5 &
 	operator -=( T const & t )
 	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) -= t;
 						}
 					}
@@ -457,11 +457,11 @@ public: // Assignment: Value
 	MArray5 &
 	operator *=( T const & t )
 	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) *= t;
 						}
 					}
@@ -479,11 +479,11 @@ public: // Assignment: Value
 	{
 		assert( u != U( 0 ) );
 		U const inv_u( U( 1 ) / u );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) *= inv_u;
 						}
 					}
@@ -500,11 +500,11 @@ public: // Assignment: Value
 	operator /=( U const & u )
 	{
 		assert( u != U( 0 ) );
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
 							operator ()( i1, i2, i3, i4, i5 ) /= u;
 						}
 					}
@@ -559,10 +559,10 @@ public: // Predicate
 	}
 
 	// Conformable?
-	template< class ArrayType >
+	template< class Ar >
 	inline
 	bool
-	conformable( ArrayType const & a ) const
+	conformable( Ar const & a ) const
 	{
 		return ( ( a.rank() == 5 ) && ( size1() == a.size1() ) && ( size2() == a.size2() ) && ( size3() == a.size3() ) && ( size4() == a.size4() ) && ( size5() == a.size5() ) );
 	}
@@ -577,10 +577,10 @@ public: // Predicate
 	}
 
 	// Equal Dimensions?
-	template< class ArrayType >
+	template< class Ar >
 	inline
 	bool
-	equal_dimensions( ArrayType const & a ) const
+	equal_dimensions( Ar const & a ) const
 	{
 		return conformable( a );
 	}
@@ -787,27 +787,6 @@ public: // Inspector
 		return array_.isize5();
 	}
 
-public: // Modifier
-
-	// Assign Default Value to all Elements
-	inline
-	MArray5 &
-	to_default()
-	{
-		for ( int i5 = 1, e5 = u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = u4(); i4 <= e4; ++i4 ) {
-				for ( int i3 = 1, e3 = u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = u1(); i1 <= e1; ++i1 ) {
-							operator ()( i1, i2, i3, i4, i5 ) = Traits::initial_value();
-						}
-					}
-				}
-			}
-		}
-		return *this;
-	}
-
 public: // MArray Generators
 
 	// Template Helpers
@@ -835,19 +814,19 @@ public: // MArray Generators
 public: // Comparison: Predicate
 
 	// MArray5 == MArray5
-	inline
 	friend
+	inline
 	bool
 	eq( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.size_bounded() );
 		assert( a.conformable( b ) );
 		if ( ( &a == &b ) || a.empty() ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) == b( i1, i2, i3, i4, i5 ) ) ) return false;
 						}
 					}
@@ -858,8 +837,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 != MArray5
-	inline
 	friend
+	inline
 	bool
 	ne( MArray5 const & a, MArray5 const & b )
 	{
@@ -867,19 +846,19 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 < MArray5
-	inline
 	friend
+	inline
 	bool
 	lt( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.size_bounded() );
 		assert( a.conformable( b ) );
 		if ( ( &a == &b ) || a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) < b( i1, i2, i3, i4, i5 ) ) ) return false;
 						}
 					}
@@ -890,19 +869,19 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 <= MArray5
-	inline
 	friend
+	inline
 	bool
 	le( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.size_bounded() );
 		assert( a.conformable( b ) );
 		if ( ( &a == &b ) || a.empty() ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) <= b( i1, i2, i3, i4, i5 ) ) ) return false;
 						}
 					}
@@ -913,8 +892,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 > MArray5
-	inline
 	friend
+	inline
 	bool
 	gt( MArray5 const & a, MArray5 const & b )
 	{
@@ -922,8 +901,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 >= MArray5
-	inline
 	friend
+	inline
 	bool
 	ge( MArray5 const & a, MArray5 const & b )
 	{
@@ -931,17 +910,17 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 == Value
-	inline
 	friend
+	inline
 	bool
 	eq( MArray5 const & a, T const & t )
 	{
 		assert( a.size_bounded() );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) == t ) ) return false;
 						}
 					}
@@ -952,8 +931,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 != Value
-	inline
 	friend
+	inline
 	bool
 	ne( MArray5 const & a, T const & t )
 	{
@@ -961,18 +940,18 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 < Value
-	inline
 	friend
+	inline
 	bool
 	lt( MArray5 const & a, T const & t )
 	{
 		assert( a.size_bounded() );
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) < t ) ) return false;
 						}
 					}
@@ -983,18 +962,18 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 <= Value
-	inline
 	friend
+	inline
 	bool
 	le( MArray5 const & a, T const & t )
 	{
 		assert( a.size_bounded() );
 		if ( a.empty() ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( a( i1, i2, i3, i4, i5 ) <= t ) ) return false;
 						}
 					}
@@ -1005,8 +984,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 > Value
-	inline
 	friend
+	inline
 	bool
 	gt( MArray5 const & a, T const & t )
 	{
@@ -1014,8 +993,8 @@ public: // Comparison: Predicate
 	}
 
 	// MArray5 >= Value
-	inline
 	friend
+	inline
 	bool
 	ge( MArray5 const & a, T const & t )
 	{
@@ -1023,8 +1002,8 @@ public: // Comparison: Predicate
 	}
 
 	// Value == MArray5
-	inline
 	friend
+	inline
 	bool
 	eq( T const & t, MArray5 const & a )
 	{
@@ -1032,8 +1011,8 @@ public: // Comparison: Predicate
 	}
 
 	// Value != MArray5
-	inline
 	friend
+	inline
 	bool
 	ne( T const & t, MArray5 const & a )
 	{
@@ -1041,18 +1020,18 @@ public: // Comparison: Predicate
 	}
 
 	// Value < MArray5
-	inline
 	friend
+	inline
 	bool
 	lt( T const & t, MArray5 const & a )
 	{
 		assert( a.size_bounded() );
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( t < a( i1, i2, i3, i4, i5 ) ) ) return false;
 						}
 					}
@@ -1063,18 +1042,18 @@ public: // Comparison: Predicate
 	}
 
 	// Value <= MArray5
-	inline
 	friend
+	inline
 	bool
 	le( T const & t, MArray5 const & a )
 	{
 		assert( a.size_bounded() );
 		if ( a.empty() ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( ! ( t <= a( i1, i2, i3, i4, i5 ) ) ) return false;
 						}
 					}
@@ -1085,8 +1064,8 @@ public: // Comparison: Predicate
 	}
 
 	// Value > MArray5
-	inline
 	friend
+	inline
 	bool
 	gt( T const & t, MArray5 const & a )
 	{
@@ -1094,8 +1073,8 @@ public: // Comparison: Predicate
 	}
 
 	// Value >= MArray5
-	inline
 	friend
+	inline
 	bool
 	ge( T const & t, MArray5 const & a )
 	{
@@ -1105,19 +1084,19 @@ public: // Comparison: Predicate
 public: // Comparison: Predicate: Any
 
 	// Any MArray5 == MArray5
-	inline
 	friend
+	inline
 	bool
 	any_eq( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.conformable( b ) );
 		if ( a.empty() ) return false;
 		if ( &a == &b ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) == b( i1, i2, i3, i4, i5 ) ) return true;
 						}
 					}
@@ -1128,8 +1107,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 != MArray5
-	inline
 	friend
+	inline
 	bool
 	any_ne( MArray5 const & a, MArray5 const & b )
 	{
@@ -1137,19 +1116,19 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 < MArray5
-	inline
 	friend
+	inline
 	bool
 	any_lt( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.conformable( b ) );
 		if ( a.empty() ) return false;
 		if ( &a == &b ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) < b( i1, i2, i3, i4, i5 ) ) return true;
 						}
 					}
@@ -1160,19 +1139,19 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 <= MArray5
-	inline
 	friend
+	inline
 	bool
 	any_le( MArray5 const & a, MArray5 const & b )
 	{
 		assert( a.conformable( b ) );
 		if ( a.empty() ) return false;
 		if ( &a == &b ) return true;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) <= b( i1, i2, i3, i4, i5 ) ) return true;
 						}
 					}
@@ -1183,8 +1162,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 > MArray5
-	inline
 	friend
+	inline
 	bool
 	any_gt( MArray5 const & a, MArray5 const & b )
 	{
@@ -1192,8 +1171,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 >= MArray5
-	inline
 	friend
+	inline
 	bool
 	any_ge( MArray5 const & a, MArray5 const & b )
 	{
@@ -1201,17 +1180,17 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 == Value
-	inline
 	friend
+	inline
 	bool
 	any_eq( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) == t ) return true;
 						}
 					}
@@ -1222,8 +1201,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 != Value
-	inline
 	friend
+	inline
 	bool
 	any_ne( MArray5 const & a, T const & t )
 	{
@@ -1231,17 +1210,17 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 < Value
-	inline
 	friend
+	inline
 	bool
 	any_lt( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) < t ) return true;
 						}
 					}
@@ -1252,17 +1231,17 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 <= Value
-	inline
 	friend
+	inline
 	bool
 	any_le( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) <= t ) return true;
 						}
 					}
@@ -1273,8 +1252,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 > Value
-	inline
 	friend
+	inline
 	bool
 	any_gt( MArray5 const & a, T const & t )
 	{
@@ -1282,8 +1261,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any MArray5 >= Value
-	inline
 	friend
+	inline
 	bool
 	any_ge( MArray5 const & a, T const & t )
 	{
@@ -1291,8 +1270,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value == MArray5
-	inline
 	friend
+	inline
 	bool
 	any_eq( T const & t, MArray5 const & a )
 	{
@@ -1300,8 +1279,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value != MArray5
-	inline
 	friend
+	inline
 	bool
 	any_ne( T const & t, MArray5 const & a )
 	{
@@ -1309,17 +1288,17 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value < MArray5
-	inline
 	friend
+	inline
 	bool
 	any_lt( T const & t, MArray5 const & a )
 	{
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( t < a( i1, i2, i3, i4, i5 ) ) return true;
 						}
 					}
@@ -1330,17 +1309,17 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value <= MArray5
-	inline
 	friend
+	inline
 	bool
 	any_le( T const & t, MArray5 const & a )
 	{
 		if ( a.empty() ) return false;
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( t <= a( i1, i2, i3, i4, i5 ) ) return true;
 						}
 					}
@@ -1351,8 +1330,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value > MArray5
-	inline
 	friend
+	inline
 	bool
 	any_gt( T const & t, MArray5 const & a )
 	{
@@ -1360,8 +1339,8 @@ public: // Comparison: Predicate: Any
 	}
 
 	// Any Value >= MArray5
-	inline
 	friend
+	inline
 	bool
 	any_ge( T const & t, MArray5 const & a )
 	{
@@ -1371,8 +1350,8 @@ public: // Comparison: Predicate: Any
 public: // Comparison: Predicate: All
 
 	// All MArray5 == MArray5
-	inline
 	friend
+	inline
 	bool
 	all_eq( MArray5 const & a, MArray5 const & b )
 	{
@@ -1380,8 +1359,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 != MArray5
-	inline
 	friend
+	inline
 	bool
 	all_ne( MArray5 const & a, MArray5 const & b )
 	{
@@ -1389,8 +1368,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 < MArray5
-	inline
 	friend
+	inline
 	bool
 	all_lt( MArray5 const & a, MArray5 const & b )
 	{
@@ -1398,8 +1377,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 <= MArray5
-	inline
 	friend
+	inline
 	bool
 	all_le( MArray5 const & a, MArray5 const & b )
 	{
@@ -1407,8 +1386,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 > MArray5
-	inline
 	friend
+	inline
 	bool
 	all_gt( MArray5 const & a, MArray5 const & b )
 	{
@@ -1416,8 +1395,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 >= MArray5
-	inline
 	friend
+	inline
 	bool
 	all_ge( MArray5 const & a, MArray5 const & b )
 	{
@@ -1425,8 +1404,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 == Value
-	inline
 	friend
+	inline
 	bool
 	all_eq( MArray5 const & a, T const & t )
 	{
@@ -1434,8 +1413,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 != Value
-	inline
 	friend
+	inline
 	bool
 	all_ne( MArray5 const & a, T const & t )
 	{
@@ -1443,8 +1422,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 < Value
-	inline
 	friend
+	inline
 	bool
 	all_lt( MArray5 const & a, T const & t )
 	{
@@ -1452,8 +1431,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 <= Value
-	inline
 	friend
+	inline
 	bool
 	all_le( MArray5 const & a, T const & t )
 	{
@@ -1461,8 +1440,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 > Value
-	inline
 	friend
+	inline
 	bool
 	all_gt( MArray5 const & a, T const & t )
 	{
@@ -1470,8 +1449,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All MArray5 >= Value
-	inline
 	friend
+	inline
 	bool
 	all_ge( MArray5 const & a, T const & t )
 	{
@@ -1479,8 +1458,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value == MArray5
-	inline
 	friend
+	inline
 	bool
 	all_eq( T const & t, MArray5 const & a )
 	{
@@ -1488,8 +1467,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value != MArray5
-	inline
 	friend
+	inline
 	bool
 	all_ne( T const & t, MArray5 const & a )
 	{
@@ -1497,8 +1476,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value < MArray5
-	inline
 	friend
+	inline
 	bool
 	all_lt( T const & t, MArray5 const & a )
 	{
@@ -1506,8 +1485,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value <= MArray5
-	inline
 	friend
+	inline
 	bool
 	all_le( T const & t, MArray5 const & a )
 	{
@@ -1515,8 +1494,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value > MArray5
-	inline
 	friend
+	inline
 	bool
 	all_gt( T const & t, MArray5 const & a )
 	{
@@ -1524,8 +1503,8 @@ public: // Comparison: Predicate: All
 	}
 
 	// All Value >= MArray5
-	inline
 	friend
+	inline
 	bool
 	all_ge( T const & t, MArray5 const & a )
 	{
@@ -1535,8 +1514,8 @@ public: // Comparison: Predicate: All
 public: // Comparison: Count
 
 	// Count MArray5 == MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_eq( MArray5 const & a, MArray5 const & b )
 	{
@@ -1544,11 +1523,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return a.size();
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) == b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1559,8 +1538,8 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 != MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_ne( MArray5 const & a, MArray5 const & b )
 	{
@@ -1568,11 +1547,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) != b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1583,8 +1562,8 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 < MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_lt( MArray5 const & a, MArray5 const & b )
 	{
@@ -1592,11 +1571,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) < b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1607,8 +1586,8 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 <= MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_le( MArray5 const & a, MArray5 const & b )
 	{
@@ -1616,11 +1595,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return a.size();
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) <= b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1631,8 +1610,8 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 > MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_gt( MArray5 const & a, MArray5 const & b )
 	{
@@ -1640,11 +1619,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) > b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1655,8 +1634,8 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 >= MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_ge( MArray5 const & a, MArray5 const & b )
 	{
@@ -1664,11 +1643,11 @@ public: // Comparison: Count
 		if ( a.empty() ) return 0;
 		if ( &a == &b ) return a.size();
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) >= b( i1, i2, i3, i4, i5 ) ) ++n;
 						}
 					}
@@ -1679,18 +1658,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 == Value
-	inline
 	friend
+	inline
 	size_type
 	count_eq( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) == t ) ++n;
 						}
 					}
@@ -1701,8 +1680,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value == MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_eq( T const & t, MArray5 const & a )
 	{
@@ -1710,18 +1689,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 != Value
-	inline
 	friend
+	inline
 	size_type
 	count_ne( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) != t ) ++n;
 						}
 					}
@@ -1732,8 +1711,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value != MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_ne( T const & t, MArray5 const & a )
 	{
@@ -1741,18 +1720,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 < Value
-	inline
 	friend
+	inline
 	size_type
 	count_lt( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) < t ) ++n;
 						}
 					}
@@ -1763,8 +1742,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value < MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_lt( T const & t, MArray5 const & a )
 	{
@@ -1772,18 +1751,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 <= Value
-	inline
 	friend
+	inline
 	size_type
 	count_le( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) <= t ) ++n;
 						}
 					}
@@ -1794,8 +1773,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value <= MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_le( T const & t, MArray5 const & a )
 	{
@@ -1803,18 +1782,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 > Value
-	inline
 	friend
+	inline
 	size_type
 	count_gt( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) > t ) ++n;
 						}
 					}
@@ -1825,8 +1804,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value > MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_gt( T const & t, MArray5 const & a )
 	{
@@ -1834,18 +1813,18 @@ public: // Comparison: Count
 	}
 
 	// Count MArray5 >= Value
-	inline
 	friend
+	inline
 	size_type
 	count_ge( MArray5 const & a, T const & t )
 	{
 		if ( a.empty() ) return 0;
 		size_type n( 0 );
-		for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
-			for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
 				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
-					for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
-						for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
 							if ( a( i1, i2, i3, i4, i5 ) >= t ) ++n;
 						}
 					}
@@ -1856,8 +1835,8 @@ public: // Comparison: Count
 	}
 
 	// Count Value >= MArray5
-	inline
 	friend
+	inline
 	size_type
 	count_ge( T const & t, MArray5 const & a )
 	{
@@ -1868,7 +1847,7 @@ public: // Comparison: Count
 
 // Functions
 
-// Make a MArray5
+// Make an MArray5
 template< class A, typename T >
 inline
 MArray5< A, T >
@@ -1877,7 +1856,7 @@ make_MArray5( A & a, T A::value_type::* pmem )
 	return MArray5< A, T >( a, pmem );
 }
 
-// Make a MArray5
+// Make an MArray5
 template< class A, typename T >
 inline
 MArray5< A, T >
@@ -1903,6 +1882,138 @@ equal_dimensions( MArray5< Aa, Ta > const & a, MArray5< Ab, Tb > const & b )
 {
 	return a.equal_dimensions( b );
 }
+
+// Stream >> MArray5
+template< class A, typename T >
+inline
+std::istream &
+operator >>( std::istream & stream, MArray5< A, T > & a )
+{
+	if ( stream && ( a.size() > 0u ) ) {
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
+				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
+							stream >> a( i1, i2, i3, i4, i5 );
+							if ( ! stream ) break;
+						} if ( ! stream ) break;
+					} if ( ! stream ) break;
+				} if ( ! stream ) break;
+			} if ( ! stream ) break;
+		}
+	}
+	return stream;
+}
+
+// Stream << MArray5
+template< class A, typename T >
+inline
+std::ostream &
+operator <<( std::ostream & stream, MArray5< A, T > const & a )
+{
+	typedef  TypeTraits< T >  Traits;
+	if ( stream && ( a.size() > 0u ) ) {
+		std::ios_base::fmtflags const old_flags( stream.flags() );
+		std::streamsize const old_precision( stream.precision( Traits::precision ) );
+		stream << std::right << std::showpoint << std::uppercase;
+		int const w( Traits::iwidth );
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
+				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
+							stream << std::setw( w ) << a( i1, i2, i3, i4, i5 ) << ' ';
+							if ( ! stream ) break;
+						} if ( ! stream ) break;
+					} if ( ! stream ) break;
+				} if ( ! stream ) break;
+			} if ( ! stream ) break;
+		}
+		stream.precision( old_precision );
+		stream.flags( old_flags );
+	}
+	return stream;
+}
+
+// Read an MArray5 from a Binary File
+template< class A, typename T >
+inline
+std::istream &
+read_binary( std::istream & stream, MArray5< A, T > & a )
+{
+	std::size_t const n( a.size() );
+	if ( stream && ( n > 0u ) ) {
+		std::size_t const type_size( sizeof( T ) / sizeof( std::istream::char_type ) );
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
+				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
+							stream.read( ( std::istream::char_type * )&a( i1, i2, i3, i4, i5 ), type_size );
+							if ( ! stream ) break;
+						} if ( ! stream ) break;
+					} if ( ! stream ) break;
+				} if ( ! stream ) break;
+			} if ( ! stream ) break;
+		}
+	}
+	return stream;
+}
+
+// Write an MArray5 to a Binary File
+template< class A, typename T >
+inline
+std::ostream &
+write_binary( std::ostream & stream, MArray5< A, T > const & a )
+{
+	std::size_t const n( a.size() );
+	if ( stream && ( n > 0u ) ) {
+		std::size_t const type_size( sizeof( T ) / sizeof( std::ostream::char_type ) );
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
+				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
+							stream.write( ( std::ostream::char_type const * )&a( i1, i2, i3, i4, i5 ), type_size );
+							if ( ! stream ) break;
+						} if ( ! stream ) break;
+					} if ( ! stream ) break;
+				} if ( ! stream ) break;
+			} if ( ! stream ) break;
+		}
+	}
+	return stream;
+}
+
+namespace fmt {
+
+// List-Directed Format: MArray5
+template< class A, typename T >
+inline
+std::string
+LD( MArray5< A, T > const & a )
+{
+	std::string s;
+	std::size_t const n( a.size() );
+	if ( n > 0u ) {
+		s.reserve( n * TypeTraits< T >::width );
+		for ( int i1 = 1, e1 = a.u1(); i1 <= e1; ++i1 ) {
+			for ( int i2 = 1, e2 = a.u2(); i2 <= e2; ++i2 ) {
+				for ( int i3 = 1, e3 = a.u3(); i3 <= e3; ++i3 ) {
+					for ( int i4 = 1, e4 = a.u4(); i4 <= e4; ++i4 ) {
+						for ( int i5 = 1, e5 = a.u5(); i5 <= e5; ++i5 ) {
+							s.append( fmt::LD( a( i1, i2, i3, i4, i5 ) ) );
+						}
+					}
+				}
+			}
+		}
+	}
+	return s;
+}
+
+} // fmt
 
 } // ObjexxFCL
 

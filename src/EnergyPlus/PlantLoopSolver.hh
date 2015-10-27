@@ -2,7 +2,7 @@
 #define PlantLoopSolver_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1S.hh>
+#include <ObjexxFCL/Array1S.hh>
 #include <ObjexxFCL/Optional.hh>
 
 // EnergyPlus Headers
@@ -85,6 +85,8 @@ namespace PlantLoopSolver {
 	};
 
 	// Functions
+	void
+	clear_state();
 
 	void
 	PlantHalfLoopSolver(
@@ -205,7 +207,7 @@ namespace PlantLoopSolver {
 		int const LoopSideNum,
 		int const FirstBranchNum,
 		int const LastBranchNum,
-		FArray1S_int LastComponentSimulated
+		Array1S_int LastComponentSimulated
 	);
 
 	//==================================================================!
@@ -318,7 +320,7 @@ namespace PlantLoopSolver {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

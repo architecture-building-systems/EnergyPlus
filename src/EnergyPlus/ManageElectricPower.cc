@@ -3,7 +3,7 @@
 #include <cmath>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
+#include <ObjexxFCL/Array.functions.hh>
 #include <ObjexxFCL/Fmath.hh>
 #include <ObjexxFCL/MArray.functions.hh>
 #include <ObjexxFCL/string.functions.hh>
@@ -137,10 +137,10 @@ namespace ManageElectricPower {
 	// SUBROUTINE SPECIFICATIONS FOR MODULE PrimaryPlantLoops
 
 	// Object Data
-	FArray1D< ElecStorageDataStruct > ElecStorage;
-	FArray1D< DCtoACInverterStruct > Inverter;
-	FArray1D< ElectricPowerLoadCenter > ElecLoadCenter; // dimension to number of machines
-	FArray1D< ElectricTransformer > Transformer;
+	Array1D< ElecStorageDataStruct > ElecStorage;
+	Array1D< DCtoACInverterStruct > Inverter;
+	Array1D< ElectricPowerLoadCenter > ElecLoadCenter; // dimension to number of machines
+	Array1D< ElectricTransformer > Transformer;
 	WholeBuildingElectricPowerSummary WholeBldgElectSummary;
 
 	// MODULE SUBROUTINES:
@@ -182,15 +182,8 @@ namespace ManageElectricPower {
 		// Using/Aliasing
 		using ScheduleManager::GetCurrentScheduleValue;
 		using General::TrimSigDigits;
-		using DataGlobals::DoOutputReporting;
 		using DataGlobals::MetersHaveBeenInitialized;
-		using DataGlobals::WarmupFlag;
-		using DataGlobals::DoingSizing;
-		using DataGlobals::CurrentTime;
 		using DataGlobals::BeginEnvrnFlag;
-		using DataEnvironment::Month;
-		using DataEnvironment::DayOfMonth;
-		using DataHVACGlobals::SysTimeElapsed;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -374,7 +367,7 @@ namespace ManageElectricPower {
 			// If a generator is needed in the simulation for a small load and it is less than the minimum part load ratio
 			// the generator will operate at the minimum part load ratio and the excess will either reduce demand or
 			// be available for storage or sell back to the power company.
-			TypeOfEquip: { auto const SELECT_CASE_var( ElecLoadCenter( LoadCenterNum ).OperationScheme );
+			{ auto const SELECT_CASE_var( ElecLoadCenter( LoadCenterNum ).OperationScheme );
 
 			if ( SELECT_CASE_var == iOpSchemeBaseLoad ) { // 'BASELOAD'
 
@@ -883,7 +876,6 @@ namespace ManageElectricPower {
 		using DataHeatBalance::IntGainTypeOf_ElectricLoadCenterStorageSimple;
 		using DataHeatBalance::IntGainTypeOf_ElectricLoadCenterStorageBattery;
 		using DataHeatBalance::IntGainTypeOf_ElectricLoadCenterTransformer;
-		using DataGlobals::NumOfZones;
 		using DataGlobals::AnyEnergyManagementSystemInModel;
 		using DataGlobals::ScheduleAlwaysOn;
 		using General::RoundSigDigits;
@@ -917,10 +909,10 @@ namespace ManageElectricPower {
 		bool IsNotOK; // Flag to verify name
 		bool IsBlank; // Flag for blank name
 
-		FArray1D_string ListName;
-		FArray1D_string InverterNames;
-		FArray1D_string StorageNames;
-		FArray1D_string TransformerNames;
+		Array1D_string ListName;
+		Array1D_string InverterNames;
+		Array1D_string StorageNames;
+		Array1D_string TransformerNames;
 		int AnyElectricityPresent; // local test for presence of Electricty in Facility
 		int NumGenerators; // local number of generators per electric load center
 		bool SetupWholeBldgReports;
@@ -986,7 +978,7 @@ namespace ManageElectricPower {
 						}
 					}
 
-					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone.Name(), NumOfZones );
+					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone );
 					if ( Inverter( InvertNum ).ZoneNum > 0 ) Inverter( InvertNum ).HeatLossesDestination = ZoneGains;
 					if ( Inverter( InvertNum ).ZoneNum == 0 ) {
 						if ( lAlphaFieldBlanks( 3 ) ) {
@@ -1041,7 +1033,7 @@ namespace ManageElectricPower {
 						}
 					}
 
-					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone.Name(), NumOfZones );
+					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone );
 					if ( Inverter( InvertNum ).ZoneNum > 0 ) Inverter( InvertNum ).HeatLossesDestination = ZoneGains;
 					if ( Inverter( InvertNum ).ZoneNum == 0 ) {
 						if ( lAlphaFieldBlanks( 3 ) ) {
@@ -1098,7 +1090,7 @@ namespace ManageElectricPower {
 						}
 					}
 
-					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone.Name(), NumOfZones );
+					Inverter( InvertNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone );
 					if ( Inverter( InvertNum ).ZoneNum > 0 ) Inverter( InvertNum ).HeatLossesDestination = ZoneGains;
 					if ( Inverter( InvertNum ).ZoneNum == 0 ) {
 						if ( lAlphaFieldBlanks( 3 ) ) {
@@ -1174,7 +1166,7 @@ namespace ManageElectricPower {
 						}
 					}
 
-					ElecStorage( StorNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone.Name(), NumOfZones );
+					ElecStorage( StorNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone );
 					if ( ElecStorage( StorNum ).ZoneNum > 0 ) ElecStorage( StorNum ).HeatLossesDestination = ZoneGains;
 					if ( ElecStorage( StorNum ).ZoneNum == 0 ) {
 						if ( lAlphaFieldBlanks( 3 ) ) {
@@ -1228,7 +1220,7 @@ namespace ManageElectricPower {
 						}
 					}
 
-					ElecStorage( StorNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone.Name(), NumOfZones );
+					ElecStorage( StorNum ).ZoneNum = FindItemInList( cAlphaArgs( 3 ), Zone );
 					if ( ElecStorage( StorNum ).ZoneNum > 0 ) ElecStorage( StorNum ).HeatLossesDestination = ZoneGains;
 					if ( ElecStorage( StorNum ).ZoneNum == 0 ) {
 						if ( lAlphaFieldBlanks( 3 ) ) {
@@ -1418,7 +1410,7 @@ namespace ManageElectricPower {
 					ErrorsFound = true;
 				}
 
-				Transformer( TransfNum ).ZoneNum = FindItemInList( cAlphaArgs( 4 ), Zone.Name(), NumOfZones );
+				Transformer( TransfNum ).ZoneNum = FindItemInList( cAlphaArgs( 4 ), Zone );
 				if ( Transformer( TransfNum ).ZoneNum > 0 ) Transformer( TransfNum ).HeatLossesDestination = ZoneGains;
 				if ( Transformer( TransfNum ).ZoneNum == 0 ) {
 					if ( lAlphaFieldBlanks( 4 ) ) {
@@ -1528,7 +1520,7 @@ namespace ManageElectricPower {
 				SetupOutputVariable( "Transformer Load Loss Energy [J]", Transformer( TransfNum ).LoadLossEnergy, "System", "Sum", Transformer( TransfNum ).Name );
 				SetupOutputVariable( "Transformer Thermal Loss Rate [W]", Transformer( TransfNum ).ThermalLossRate, "System", "Average", Transformer( TransfNum ).Name );
 				SetupOutputVariable( "Transformer Thermal Loss Energy [J]", Transformer( TransfNum ).ThermalLossEnergy, "System", "Sum", Transformer( TransfNum ).Name );
-				SetupOutputVariable( "Transformer Distribution Electric Loss Energy [J]", Transformer( TransfNum ).ElecUseUtility, "System", "Sum", Transformer( TransfNum ).Name, _, "Electricity", _, _, "System" );
+				SetupOutputVariable( "Transformer Distribution Electric Loss Energy [J]", Transformer( TransfNum ).ElecUseUtility, "System", "Sum", Transformer( TransfNum ).Name, _, "Electricity", "ExteriorEquipment", "Transformer", "System" );
 				SetupOutputVariable( "Transformer Cogeneration Electric Loss Energy [J]", Transformer( TransfNum ).ElecProducedCoGen, "System", "Sum", Transformer( TransfNum ).Name, _, "ElectricityProduced", "COGENERATION", _, "System" );
 
 				if ( Transformer( TransfNum ).ZoneNum > 0 ) {
@@ -1575,7 +1567,7 @@ namespace ManageElectricPower {
 			GetObjectItem( cCurrentModuleObject, Count, cAlphaArgs, NumAlphas, rNumericArgs, NumNums, IOStat, _, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), ElecLoadCenter.Name(), Count - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), ElecLoadCenter, Count - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -1672,7 +1664,7 @@ namespace ManageElectricPower {
 				} else {
 					// check if previous elec load center already uses this inverter.
 					if ( Count - 1 > 0 ) {
-						Found = FindItemInList( cAlphaArgs( 7 ), ElecLoadCenter.InverterName(), Count - 1 );
+						Found = FindItemInList( cAlphaArgs( 7 ), ElecLoadCenter, &ElectricPowerLoadCenter::InverterName, Count - 1 );
 						if ( Found != 0 ) {
 							ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + "\", invalid entry." );
 							ShowContinueError( "Invalid " + cAlphaFieldNames( 7 ) + " = " + cAlphaArgs( 7 ) );
@@ -1699,7 +1691,7 @@ namespace ManageElectricPower {
 				} else {
 					// check if previous elec load center already uses this storage.
 					if ( Count - 1 > 0 ) {
-						Found = FindItemInList( cAlphaArgs( 8 ), ElecLoadCenter.StorageName(), Count - 1 );
+						Found = FindItemInList( cAlphaArgs( 8 ), ElecLoadCenter, &ElectricPowerLoadCenter::StorageName, Count - 1 );
 						if ( Found != 0 ) {
 							ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + "\", invalid entry." );
 							ShowContinueError( "Invalid " + cAlphaFieldNames( 8 ) + " = " + cAlphaArgs( 8 ) );
@@ -1968,7 +1960,7 @@ namespace ManageElectricPower {
 		MyLoad = ElecLoadCenter( LoadCenterNum ).ElecGen( GenNum ).PowerRequestThisTimestep;
 
 		// Select and call models and also collect results for load center power conditioning and reporting
-		TypeOfEquip: { auto const SELECT_CASE_var( GeneratorType );
+		{ auto const SELECT_CASE_var( GeneratorType );
 
 		if ( SELECT_CASE_var == iGeneratorICEngine ) { // 'Generator:InternalCombustionEngine'
 			SimICEngineGenerator( GeneratorType, GeneratorName, ElecLoadCenter( LoadCenterNum ).ElecGen( GenNum ).GeneratorIndex, RunFlag, MyLoad, FirstHVACIteration );
@@ -2023,7 +2015,7 @@ namespace ManageElectricPower {
 
 	void
 	CalcLoadCenterThermalLoad(
-		bool const FirstHVACIteration, // unused1208
+		bool const EP_UNUSED( FirstHVACIteration ), // unused1208
 		int const LoadCenterNum, // Load Center number counter
 		Real64 & ThermalLoad // heat rate called for from cogenerator(watts)
 	)
@@ -2046,18 +2038,11 @@ namespace ManageElectricPower {
 		// Using/Aliasing
 		using namespace DataPlant;
 		using DataHVACGlobals::NumPlantLoops;
-		using DataHVACGlobals::SysTimeElapsed;
 		using InputProcessor::SameString;
 
-		using DataGlobals::DoOutputReporting;
 		using DataGlobals::MetersHaveBeenInitialized;
-		using DataGlobals::WarmupFlag;
-		using DataGlobals::DoingSizing;
-		using DataGlobals::CurrentTime;
 
 		using General::TrimSigDigits;
-		using DataEnvironment::Month;
-		using DataEnvironment::DayOfMonth;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -2073,7 +2058,7 @@ namespace ManageElectricPower {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		static bool MyOneTimeSetupFlag( true );
-		static FArray1D_bool MyCoGenSetupFlag;
+		static Array1D_bool MyCoGenSetupFlag;
 		int FoundCount;
 		int i;
 		int j;
@@ -2523,7 +2508,6 @@ namespace ManageElectricPower {
 
 		// Using/Aliasing
 		using DataGlobals::BeginEnvrnFlag;
-		using DataHeatBalance::ZoneIntGain;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -2540,8 +2524,6 @@ namespace ManageElectricPower {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		static bool MyEnvrnFlag( true );
-		static int InvertNum( 0 );
-		static int ZoneNum( 0 );
 
 		if ( NumInverters == 0 ) return;
 
@@ -2620,9 +2602,9 @@ namespace ManageElectricPower {
 		static Real64 Pdemand( 0.0 );
 		static Real64 PpcuLosses( 0.0 );
 		static Real64 Pstorage( 0.0 );
-		static FArray1D_bool MyEnvrnFlag;
+		static Array1D_bool MyEnvrnFlag;
 		static bool MyOneTimeFlag( true );
-		static FArray1D_bool MyWarmupFlag; // flag for init after warmup complete
+		static Array1D_bool MyWarmupFlag; // flag for init after warmup complete
 		Real64 TimeElapsed; // Fraction of the current hour that has elapsed (h)
 		static int BinNum( 0 );
 		static Real64 Input0( 0.0 );
@@ -2641,7 +2623,6 @@ namespace ManageElectricPower {
 		Real64 E0d; // fully discharged internal battery voltage
 		Real64 InternalR; // internal resistance
 		Real64 Xf; // normalized maximum capacity at the given current
-		Real64 X; // normalized maximum capacity at the given current
 		Real64 Inew; // converged current
 		Real64 Tnew; // charge of discharge time, defined by T=qmaxf/I
 		Real64 Imax; // maximum current
@@ -2656,10 +2637,8 @@ namespace ManageElectricPower {
 		static Real64 error( 0.0 ); // error in iterative process
 		static Real64 Pactual( 0.0 ); // actual Power output
 		static Real64 RHS( 0.0 ); // right hand side of a equation
-		static Real64 I( 0.0 ); // current
 		Real64 DeltaSOC1; // difference of fractional SOC between this time step and last time step
 		Real64 DeltaSOC2; // difference of fractional SOC between last time step and last two time step
-		int SaveArrayBounds; // Maximum size for the arrays used for rainflow counting
 
 		if ( ! ( ElecLoadCenter( LoadCenterNum ).StoragePresent ) ) return;
 
@@ -3029,26 +3008,9 @@ namespace ManageElectricPower {
 
 				Pw = tmpPdraw / Numbattery;
 				q0 = ElecStorage( ElecStorNum ).LastTimeStepAvailable + ElecStorage( ElecStorNum ).LastTimeStepBound;
-				I0 = 10.0; // Initial assumption
-				T0 = qmax / I0; // Initial Assumption
-				qmaxf = qmax * k * c * T0 / ( 1.0 - std::exp( -k * T0 ) + c * ( k * T0 - 1.0 + std::exp( -k * T0 ) ) ); //Initial calculation of a function qmax(I)
-				Xf = ( qmax - q0 ) / qmaxf;
-				Ef = E0c + CurveValue( ElecStorage( ElecStorNum ).DischargeCurveNum, Xf ); //E0d+Ac*Xf+Cc*X/(Dc-Xf)
-				Volt = Ef - I0 * InternalR;
-				Inew = Pw / Volt;
-				Tnew = qmaxf / Inew;
-				error = 1.0;
-
-				while ( error > 0.0001 ) { //Iteration process to get converged current(I)
-					I0 = Inew;
-					T0 = Tnew;
-					qmaxf = qmax * k * c * T0 / ( 1.0 - std::exp( -k * T0 ) + c * ( k * T0 - 1.0 + std::exp( -k * T0 ) ) );
-					Xf = ( qmax - q0 ) / qmaxf;
-					Ef = E0c + CurveValue( ElecStorage( ElecStorNum ).DischargeCurveNum, Xf ); //E0c+Ad*Xf+Cd*X/(Dd-Xf)
-					Volt = Ef - I0 * InternalR;
-					Inew = Pw / Volt;
-					Tnew = qmaxf / Inew;
-					error = std::abs( Inew - I0 );
+				bool const ok = determineCurrentForBatteryDischarge( I0, T0, Volt, Pw, q0, ElecStorage( ElecStorNum ).DischargeCurveNum, k, c, qmax, E0c, InternalR );
+				if ( !ok ) {
+					ShowFatalError( "ElectricLoadCenter:Storage:Battery named=\"" + ElecStorage( ElecStorNum ).Name + "\". Battery discharge current could not be estimated due to iteration limit reached. " );
 				}
 
 				dividend = k * ElecStorage( ElecStorNum ).LastTimeStepAvailable * std::exp( -k * TimeStepSys ) + q0 * k * c * ( 1.0 - std::exp( -k * TimeStepSys ) );
@@ -3192,6 +3154,83 @@ namespace ManageElectricPower {
 
 	//*****************************************************************************************************************
 
+	bool
+	determineCurrentForBatteryDischarge(
+		Real64& curI0,
+		Real64& curT0,
+		Real64& curVolt,
+		Real64 const Pw,
+		Real64 const q0,
+		int const CurveNum,
+		Real64 const k,
+		Real64 const c,
+		Real64 const qmax,
+		Real64 const E0c,
+		Real64 const InternalR
+	)
+	{
+		// FUNCTION INFORMATION:
+		//       AUTHOR         B. Griffith
+		//       DATE WRITTEN   June-August 2008
+		//       MODIFIED       BG May 2009, added EMS
+		//                      BN (FSEC) Feb 2010 (pass out two storage values)
+		//                      Y. KyungTae & W. Wang July-August, 2011 Added a battery model
+		//       RE-ENGINEERED  Jason Glazer, GARD Analytics, February 2015, refactor charge calculation into a function
+
+		// PURPOSE OF THIS FUNCTION:
+		// Calculate the current for battery discharge in a separate function so that it could be called from the unit tests
+
+		// METHODOLOGY EMPLOYED:
+		// na
+
+		// REFERENCES:
+		// na
+
+		// Using/Aliasing
+		using CurveManager::CurveValue;
+
+		// Locals
+		// FUNCTION ARGUMENT DEFINITIONS:
+
+		// INTERFACE BLOCK SPECIFICATIONS:
+		// na
+
+		// DERIVED TYPE DEFINITIONS:
+		// na
+
+		// FUNCTION LOCAL VARIABLE DECLARATIONS:
+		curI0 = 10.0; // Initial assumption
+		curT0 = qmax / curI0; // Initial Assumption
+		Real64 qmaxf = qmax * k * c * curT0 / ( 1.0 - std::exp( -k * curT0 ) + c * ( k * curT0 - 1.0 + std::exp( -k * curT0 ) ) ); //Initial calculation of a function qmax(I)
+		Real64 Xf = ( qmax - q0 ) / qmaxf;
+		Real64 Ef = E0c + CurveValue( CurveNum, Xf ); //E0d+Ac*Xf+Cc*X/(Dc-Xf)
+		curVolt = Ef - curI0 * InternalR;
+		Real64 Inew = Pw / curVolt;
+		Real64 Tnew = qmaxf / Inew;
+		Real64 error = 1.0;
+		int countForIteration = 0;
+		bool exceedIterationLimit = false;
+
+		while ( error > 0.0001 ) { // Iteration process to get converged current(I)
+			curI0 = Inew;
+			curT0 = Tnew;
+			qmaxf = qmax * k * c * curT0 / ( 1.0 - std::exp( -k * curT0 ) + c * ( k * curT0 - 1.0 + std::exp( -k * curT0 ) ) );
+			Xf = ( qmax - q0 ) / qmaxf;
+			Ef = E0c + CurveValue( CurveNum, Xf ); //E0c+Ad*Xf+Cd*X/(Dd-Xf)
+			curVolt = Ef - curI0 * InternalR;
+			Inew = Pw / curVolt;
+			Tnew = qmaxf / Inew;
+			error = std::abs( Inew - curI0 );
+			++countForIteration;
+			if ( countForIteration > 1000 ) {
+				exceedIterationLimit = true;
+				break;
+			}
+		}
+		return (!exceedIterationLimit);
+	}
+
+
 	void
 	FigureElectricalStorageZoneGains()
 	{
@@ -3229,8 +3268,6 @@ namespace ManageElectricPower {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		static bool MyEnvrnFlag( true );
-		static int StorNum( 0 );
-		static int ZoneNum( 0 );
 
 		if ( NumElecStorageDevices == 0 ) return;
 
@@ -3499,7 +3536,6 @@ namespace ManageElectricPower {
 
 		// Using/Aliasing
 		using DataGlobals::BeginEnvrnFlag;
-		using DataHeatBalance::ZoneIntGain;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -3516,8 +3552,6 @@ namespace ManageElectricPower {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		static bool MyEnvrnFlag( true );
-		static int TransfNum( 0 );
-		static int ZoneNum( 0 );
 
 		if ( NumTransformers == 0 ) return;
 
@@ -3539,11 +3573,11 @@ namespace ManageElectricPower {
 	Rainflow(
 		int const numbin, // numbin = constant value
 		Real64 const input, // input = input value from other object (battery model)
-		FArray1A< Real64 > B1, // stores values of points, calculated here - stored for next timestep
-		FArray1A< Real64 > X, // stores values of two data point difference, calculated here - stored for next timestep
+		Array1A< Real64 > B1, // stores values of points, calculated here - stored for next timestep
+		Array1A< Real64 > X, // stores values of two data point difference, calculated here - stored for next timestep
 		int & count, // calculated here - stored for next timestep in main loop
-		FArray1A< Real64 > Nmb, // calculated here - stored for next timestep in main loop
-		FArray1A< Real64 > OneNmb, // calculated here - stored for next timestep in main loop
+		Array1A< Real64 > Nmb, // calculated here - stored for next timestep in main loop
+		Array1A< Real64 > OneNmb, // calculated here - stored for next timestep in main loop
 		int const dim // end dimension of array
 	)
 	{
@@ -3585,11 +3619,7 @@ namespace ManageElectricPower {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		Real64 var1;
-		Real64 var2;
 		int num;
-		int i;
-		int k;
 
 		X( count ) = input - B1( count - 1 ); // calculate the difference between two data (current and previous)
 
@@ -3655,10 +3685,10 @@ namespace ManageElectricPower {
 
 	void
 	shift(
-		FArray1A< Real64 > A,
+		Array1A< Real64 > A,
 		int const m,
 		int const n,
-		FArray1A< Real64 > B,
+		Array1A< Real64 > B,
 		int const dim // end dimension of arrays
 	)
 	{
@@ -3714,7 +3744,7 @@ namespace ManageElectricPower {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

@@ -1,9 +1,10 @@
 // C++ Headers
 #include <cmath>
+#include <memory>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
-#include <ObjexxFCL/FArray3D.hh>
+#include <ObjexxFCL/Array.functions.hh>
+#include <ObjexxFCL/Array3D.hh>
 #include <ObjexxFCL/Fmath.hh>
 #include <ObjexxFCL/gio.hh>
 
@@ -21,6 +22,7 @@
 #include <DataPrecisionGlobals.hh>
 #include <FluidProperties.hh>
 #include <General.hh>
+#include <GroundTemperatureModeling/GroundTemperatureModelManager.hh>
 #include <HeatBalanceInternalHeatGains.hh>
 #include <InputProcessor.hh>
 #include <NodeInputManager.hh>
@@ -63,6 +65,7 @@ namespace PipeHeatTransfer {
 
 	// Using/Aliasing
 	using namespace DataPrecisionGlobals;
+	using namespace GroundTemperatureManager;
 	using DataPlant::TypeOf_PipeExterior;
 	using DataPlant::TypeOf_PipeInterior;
 	using DataPlant::TypeOf_PipeUnderground;
@@ -108,8 +111,8 @@ namespace PipeHeatTransfer {
 	// SUBROUTINE SPECIFICATIONS FOR MODULE
 
 	// Object Data
-	FArray1D< PipeHTData > PipeHT;
-	FArray1D< PipeHeatTransferReport > PipeHTReport;
+	Array1D< PipeHTData > PipeHT;
+	Array1D< PipeHeatTransferReport > PipeHTReport;
 
 	//==============================================================================
 
@@ -144,7 +147,6 @@ namespace PipeHeatTransfer {
 		// Using/Aliasing
 		using InputProcessor::FindItemInList;
 		using General::TrimSigDigits;
-		using DataLoopNode::Node;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -168,7 +170,7 @@ namespace PipeHeatTransfer {
 		}
 
 		if ( EqNum == 0 ) {
-			PipeHTNum = FindItemInList( EquipName, PipeHT.Name(), NumOfPipeHT );
+			PipeHTNum = FindItemInList( EquipName, PipeHT );
 			if ( PipeHTNum == 0 ) {
 				ShowFatalError( "SimPipeHeatTransfer: Pipe:heat transfer requested not found=" + EquipName ); // Catch any bad names before crashing
 			}
@@ -223,7 +225,7 @@ namespace PipeHeatTransfer {
 					for ( WidthIndex = 2; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
 						//This will store the old 'current' values as the new 'previous values'  This allows
 						// us to use the previous time array as history terms in the equations
-						PipeHT( PipeHTNum ).T( PreviousTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex );
+						PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, PreviousTimeIndex ) = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, CurrentTimeIndex );
 					}
 				}
 			}
@@ -255,14 +257,11 @@ namespace PipeHeatTransfer {
 		// REFERENCES:
 
 		// Using/Aliasing
-		using DataGlobals::NumOfZones;
 		using DataGlobals::SecInHour;
 		using DataGlobals::Pi;
 		using DataHeatBalance::Construct;
-		using DataHeatBalance::TotConstructs;
 		using DataHeatBalance::Zone;
 		using DataHeatBalance::Material;
-		using DataHeatBalance::TotMaterials;
 		using DataHeatBalance::IntGainTypeOf_PipeIndoor;
 		using InputProcessor::GetNumObjectsFound;
 		using InputProcessor::GetObjectItem;
@@ -304,7 +303,6 @@ namespace PipeHeatTransfer {
 		int PipeItem;
 		int NumAlphas; // Number of Alphas for each GetObjectItem call
 		int NumNumbers; // Number of Numbers for each GetObjectItem call
-		int NumFluids; // number of fluids in sim.
 		int NumOfPipeHTInt; // Number of Pipe Heat Transfer objects
 		int NumOfPipeHTExt; // Number of Pipe Heat Transfer objects
 		int NumOfPipeHTUG; // Number of Pipe Heat Transfer objects
@@ -338,7 +336,7 @@ namespace PipeHeatTransfer {
 
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), PipeHT.Name(), Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), PipeHT, Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -348,7 +346,7 @@ namespace PipeHeatTransfer {
 
 			// General user input data
 			PipeHT( Item ).Construction = cAlphaArgs( 2 );
-			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct.Name(), TotConstructs );
+			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct );
 
 			if ( PipeHT( Item ).ConstructionNum == 0 ) {
 				ShowSevereError( "Invalid " + cAlphaFieldNames( 2 ) + '=' + cAlphaArgs( 2 ) );
@@ -388,7 +386,7 @@ namespace PipeHeatTransfer {
 			if ( SELECT_CASE_var == "ZONE" ) {
 				PipeHT( Item ).EnvironmentPtr = ZoneEnv;
 				PipeHT( Item ).EnvrZone = cAlphaArgs( 6 );
-				PipeHT( Item ).EnvrZonePtr = FindItemInList( cAlphaArgs( 6 ), Zone.Name(), NumOfZones );
+				PipeHT( Item ).EnvrZonePtr = FindItemInList( cAlphaArgs( 6 ), Zone );
 				if ( PipeHT( Item ).EnvrZonePtr == 0 ) {
 					ShowSevereError( "Invalid " + cAlphaFieldNames( 6 ) + '=' + cAlphaArgs( 6 ) );
 					ShowContinueError( "Entered in " + cCurrentModuleObject + '=' + cAlphaArgs( 1 ) );
@@ -452,7 +450,7 @@ namespace PipeHeatTransfer {
 
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), PipeHT.Name(), Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), PipeHT, Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -462,7 +460,7 @@ namespace PipeHeatTransfer {
 
 			// General user input data
 			PipeHT( Item ).Construction = cAlphaArgs( 2 );
-			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct.Name(), TotConstructs );
+			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct );
 
 			if ( PipeHT( Item ).ConstructionNum == 0 ) {
 				ShowSevereError( "Invalid " + cAlphaFieldNames( 2 ) + '=' + cAlphaArgs( 2 ) );
@@ -545,7 +543,7 @@ namespace PipeHeatTransfer {
 
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), PipeHT.Name(), Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), PipeHT, Item - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -555,7 +553,7 @@ namespace PipeHeatTransfer {
 
 			// General user input data
 			PipeHT( Item ).Construction = cAlphaArgs( 2 );
-			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct.Name(), TotConstructs );
+			PipeHT( Item ).ConstructionNum = FindItemInList( cAlphaArgs( 2 ), Construct );
 
 			if ( PipeHT( Item ).ConstructionNum == 0 ) {
 				ShowSevereError( "Invalid " + cAlphaFieldNames( 2 ) + '=' + cAlphaArgs( 2 ) );
@@ -620,7 +618,7 @@ namespace PipeHeatTransfer {
 			// Also get the soil material name
 			// A7,  \field Soil Material
 			PipeHT( Item ).SoilMaterial = cAlphaArgs( 6 );
-			PipeHT( Item ).SoilMaterialNum = FindItemInList( cAlphaArgs( 6 ), Material.Name(), TotMaterials );
+			PipeHT( Item ).SoilMaterialNum = FindItemInList( cAlphaArgs( 6 ), Material );
 			if ( PipeHT( Item ).SoilMaterialNum == 0 ) {
 				ShowSevereError( "Invalid " + cAlphaFieldNames( 6 ) + '=' + PipeHT( Item ).SoilMaterial );
 				ShowContinueError( "Found in " + cCurrentModuleObject + '=' + PipeHT( Item ).Name );
@@ -646,58 +644,19 @@ namespace PipeHeatTransfer {
 				PipeHT( Item ).dSregular = PipeHT( Item ).DomainDepth / ( PipeHT( Item ).NumDepthNodes - 1 );
 			}
 
-			// Now we need to see if average annual temperature data is brought in here
-			if ( NumNumbers >= 3 ) {
-				PipeHT( Item ).AvgAnnualManualInput = 1;
-
-				//If so, we need to read in the data
-				// N3,  \field Average soil surface temperature
-				PipeHT( Item ).AvgGroundTemp = rNumericArgs( 3 );
-				//IF (PipeHT(Item)%AvgGroundTemp == 0) THEN
-				//  CALL ShowSevereError('GetPipesHeatTransfer: Invalid Average Ground Temp for PIPE:UNDERGROUND=' &
-				//                        //TRIM(PipeHT(Item)%Name))
-				//  CALL ShowContinueError('If any one annual ground temperature item is entered, all 3 items must be entered')
-				//  ErrorsFound=.TRUE.
-				//ENDIF
-
-				// N4,  \field Amplitude of soil surface temperature
-				if ( NumNumbers >= 4 ) {
-					PipeHT( Item ).AvgGndTempAmp = rNumericArgs( 4 );
-					if ( PipeHT( Item ).AvgGndTempAmp < 0.0 ) {
-						ShowSevereError( "Invalid " + cNumericFieldNames( 4 ) + '=' + RoundSigDigits( PipeHT( Item ).AvgGndTempAmp, 2 ) );
-						ShowContinueError( "Found in " + cCurrentModuleObject + '=' + PipeHT( Item ).Name );
-						ErrorsFound = true;
-					}
-				}
-
-				// N5;  \field Phase constant of soil surface temperature
-				if ( NumNumbers >= 5 ) {
-					PipeHT( Item ).PhaseShiftDays = rNumericArgs( 5 );
-					if ( PipeHT( Item ).PhaseShiftDays < 0 ) {
-						ShowSevereError( "Invalid " + cNumericFieldNames( 5 ) + '=' + RoundSigDigits( PipeHT( Item ).PhaseShiftDays ) );
-						ShowContinueError( "Found in " + cCurrentModuleObject + '=' + PipeHT( Item ).Name );
-						ErrorsFound = true;
-					}
-				}
-
-				if ( NumNumbers >= 3 && NumNumbers < 5 ) {
-					ShowSevereError( cCurrentModuleObject + '=' + PipeHT( Item ).Name );
-					ShowContinueError( "If any one annual ground temperature item is entered, all 3 items must be entered" );
-					ErrorsFound = true;
-				}
-
-			}
-
 			if ( PipeHT( Item ).ConstructionNum != 0 ) {
 				ValidatePipeConstruction( cCurrentModuleObject, cAlphaArgs( 2 ), cAlphaFieldNames( 2 ), PipeHT( Item ).ConstructionNum, Item, ErrorsFound );
 			}
+
+			// Get ground temperature model
+			PipeHT( Item ).groundTempModel = GetGroundTempModelAndInit( cAlphaArgs( 7 ), cAlphaArgs( 8 ) );
 
 			// Select number of pipe sections.  Hanby's optimal number of 20 section is selected.
 			NumSections = NumPipeSections;
 			PipeHT( Item ).NumSections = NumPipeSections;
 
 			// For buried pipes, we need to allocate the cartesian finite difference array
-			PipeHT( Item ).T.allocate( TentativeTimeIndex, PipeHT( Item ).NumSections, PipeHT( Item ).NumDepthNodes, PipeHT( Item ).PipeNodeWidth );
+			PipeHT( Item ).T.allocate( PipeHT( Item ).PipeNodeWidth, PipeHT( Item ).NumDepthNodes, PipeHT( Item ).NumSections, TentativeTimeIndex );
 			PipeHT( Item ).T = 0.0;
 
 		} // PipeUG input loop
@@ -861,7 +820,7 @@ namespace PipeHeatTransfer {
 
 	void
 	InitPipesHeatTransfer(
-		int const PipeType,
+		int const EP_UNUSED( PipeType ),
 		int const PipeHTNum, // component number
 		bool const FirstHVACIteration // component number
 	)
@@ -894,17 +853,10 @@ namespace PipeHeatTransfer {
 		using DataGlobals::TimeStep;
 		using DataGlobals::TimeStepZone;
 		using DataGlobals::SecInHour;
-		using DataGlobals::BeginTimeStepFlag;
 		using DataHVACGlobals::SysTimeElapsed;
 		using DataHVACGlobals::TimeStepSys;
-		using DataHVACGlobals::ShortenTimeStepSys;
 		using DataEnvironment::OutDryBulbTemp;
-		using DataEnvironment::GroundTemp;
-		using DataEnvironment::PubGroundTempSurface;
-		using DataEnvironment::PubGroundTempSurfFlag;
 		using DataLoopNode::Node;
-		using DataHeatBalance::TotConstructs;
-		using DataHeatBalance::TotMaterials;
 		using DataHeatBalance::Construct;
 		using DataHeatBalance::Material;
 		using DataHeatBalFanSys::MAT; // average (mean) zone air temperature [C]
@@ -913,21 +865,12 @@ namespace PipeHeatTransfer {
 		using FluidProperties::GetSpecificHeatGlycol;
 		using FluidProperties::GetDensityGlycol;
 		using DataPlant::PlantLoop;
-		using DataPlant::DemandSide;
 		using DataPlant::ScanPlantLoopsForObject;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
-		int const NumPipeSections( 20 ); // Number of length nodes in Hanby model
-		int const NumberOfDepthNodes( 8 ); // Number of nodes in the cartesian grid
-		int const MonthsInYear( 12 ); // Number of months in the year
-		int const AvgDaysInMonth( 30 ); // Average days in a month
-		int const DemandLoopSide( 1 ); // Demand Loop side indicator
-		Real64 const LargeNumber( 9999.9 ); // Large number (compared to temperature values)
-		Real64 const SecondsInHour( 3600.0 ); // Number of seconds in hour
-		Real64 const HoursInDay( 24.0 ); // Number of hours in day
 		static std::string const RoutineName( "InitPipesHeatTransfer" );
 
 		// INTERFACE BLOCK SPECIFICATIONS
@@ -941,7 +884,6 @@ namespace PipeHeatTransfer {
 		static bool OneTimeInit( true ); // one time flag
 		Real64 FirstTemperatures; // initial temperature of every node in pipe (set to inlet temp) [C]
 		int PipeNum; // number of pipes
-		int MonthIndex;
 		int TimeIndex;
 		int LengthIndex;
 		int DepthIndex;
@@ -949,10 +891,6 @@ namespace PipeHeatTransfer {
 		Real64 CurrentDepth;
 		Real64 CurTemp;
 		Real64 CurSimDay;
-		int PlantLoopCtr;
-		int LoopSideCtr;
-		int BranchCtr;
-		int CompCtr;
 		bool PushArrays;
 		bool errFlag;
 
@@ -990,45 +928,6 @@ namespace PipeHeatTransfer {
 
 				if ( errFlag ) continue;
 
-				//If there are any underground buried pipes, we must bring in data
-				if ( PipeHT( PipeNum ).EnvironmentPtr == GroundEnv ) {
-
-					//If ground temp data was not brought in manually in GETINPUT,
-					// then we must get it from the surface ground temperatures
-					if ( PipeHT( PipeNum ).AvgAnnualManualInput == 0 ) {
-
-						if ( ! PubGroundTempSurfFlag ) {
-							ShowFatalError( "No Site:GroundTemperature:Shallow object found.  This is required for a Pipe:Underground object." );
-						}
-
-						//Calculate Average Ground Temperature for all 12 months of the year:
-						PipeHT( PipeNum ).AvgGroundTemp = 0.0;
-						for ( MonthIndex = 1; MonthIndex <= MonthsInYear; ++MonthIndex ) {
-							PipeHT( PipeNum ).AvgGroundTemp += PubGroundTempSurface( MonthIndex );
-						}
-						PipeHT( PipeNum ).AvgGroundTemp /= MonthsInYear;
-
-						//Calculate Average Amplitude from Average:
-						PipeHT( PipeNum ).AvgGndTempAmp = 0.0;
-						for ( MonthIndex = 1; MonthIndex <= MonthsInYear; ++MonthIndex ) {
-							PipeHT( PipeNum ).AvgGndTempAmp += std::abs( PubGroundTempSurface( MonthIndex ) - PipeHT( PipeNum ).AvgGroundTemp );
-						}
-						PipeHT( PipeNum ).AvgGndTempAmp /= MonthsInYear;
-
-						//Also need to get the month of minimum surface temperature to set phase shift for Kusuda and Achenbach:
-						PipeHT( PipeNum ).MonthOfMinSurfTemp = 0;
-						PipeHT( PipeNum ).MinSurfTemp = LargeNumber; //Set high so that the first months temp will be lower and actually get updated
-						for ( MonthIndex = 1; MonthIndex <= MonthsInYear; ++MonthIndex ) {
-							if ( PubGroundTempSurface( MonthIndex ) <= PipeHT( PipeNum ).MinSurfTemp ) {
-								PipeHT( PipeNum ).MonthOfMinSurfTemp = MonthIndex;
-								PipeHT( PipeNum ).MinSurfTemp = PubGroundTempSurface( MonthIndex );
-							}
-						}
-						PipeHT( PipeNum ).PhaseShiftDays = PipeHT( PipeNum ).MonthOfMinSurfTemp * AvgDaysInMonth;
-					} //End manual ground data input structure
-
-				}
-
 			}
 			if ( errFlag ) {
 				ShowFatalError( "InitPipesHeatTransfer: Program terminated due to previous condition(s)." );
@@ -1050,7 +949,7 @@ namespace PipeHeatTransfer {
 							for ( DepthIndex = 1; DepthIndex <= PipeHT( PipeNum ).NumDepthNodes; ++DepthIndex ) {
 								for ( WidthIndex = 1; WidthIndex <= PipeHT( PipeNum ).PipeNodeWidth; ++WidthIndex ) {
 									CurrentDepth = ( DepthIndex - 1 ) * PipeHT( PipeNum ).dSregular;
-									PipeHT( PipeNum ).T( TimeIndex, LengthIndex, DepthIndex, WidthIndex ) = TBND( CurrentDepth, CurSimDay, PipeNum );
+									PipeHT( PipeNum ).T( WidthIndex, DepthIndex, LengthIndex, TimeIndex ) = TBND( CurrentDepth, CurSimDay, PipeNum );
 								}
 							}
 						}
@@ -1098,13 +997,13 @@ namespace PipeHeatTransfer {
 							//Farfield boundary
 							CurrentDepth = ( DepthIndex - 1 ) * PipeHT( PipeHTNum ).dSregular;
 							CurTemp = TBND( CurrentDepth, CurSimDay, PipeHTNum );
-							PipeHT( PipeHTNum ).T( TimeIndex, LengthIndex, DepthIndex, 1 ) = CurTemp;
+							PipeHT( PipeHTNum ).T( 1, DepthIndex, LengthIndex, TimeIndex ) = CurTemp;
 						}
 						for ( WidthIndex = 1; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
 							//Bottom side of boundary
 							CurrentDepth = PipeHT( PipeHTNum ).DomainDepth;
 							CurTemp = TBND( CurrentDepth, CurSimDay, PipeHTNum );
-							PipeHT( PipeHTNum ).T( TimeIndex, LengthIndex, PipeHT( PipeHTNum ).NumDepthNodes, WidthIndex ) = CurTemp;
+							PipeHT( PipeHTNum ).T( WidthIndex, PipeHT( PipeHTNum ).NumDepthNodes, LengthIndex, TimeIndex ) = CurTemp;
 						}
 					}
 				}
@@ -1152,7 +1051,7 @@ namespace PipeHeatTransfer {
 						for ( WidthIndex = 2; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
 							//This will essentially 'accept' the tentative values that were calculated last iteration
 							// as the new officially 'current' values
-							PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex );
+							PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, CurrentTimeIndex ) = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex );
 						}
 					}
 				}
@@ -1171,7 +1070,7 @@ namespace PipeHeatTransfer {
 				for ( DepthIndex = 1; DepthIndex <= PipeHT( PipeHTNum ).NumDepthNodes; ++DepthIndex ) {
 					for ( WidthIndex = 2; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
 						//This will essentially erase the past iterations and revert back to the correct values
-						PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex );
+						PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, CurrentTimeIndex );
 					}
 				}
 			}
@@ -1210,7 +1109,7 @@ namespace PipeHeatTransfer {
 
 	void
 	InitializeHeatTransferPipes(
-		int const PipeType, // Type of Pipe
+		int const EP_UNUSED( PipeType ), // Type of Pipe
 		std::string const & PipeName, // Name of Pipe
 		int & PipeNum // Index into pipe structure for name
 	)
@@ -1256,7 +1155,7 @@ namespace PipeHeatTransfer {
 		}
 
 		if ( PipeNum == 0 ) {
-			PipeNum = FindItemInList( PipeName, PipeHT.Name(), NumOfPipeHT );
+			PipeNum = FindItemInList( PipeName, PipeHT );
 			if ( PipeNum == 0 ) {
 				ShowFatalError( "SimPipes: Pipe requested not found =" + PipeName ); // Catch any bad names before crashing
 			}
@@ -1406,9 +1305,9 @@ namespace PipeHeatTransfer {
 
 			PipeDepth = PipeHT( PipeHTNum ).PipeNodeDepth;
 			PipeWidth = PipeHT( PipeHTNum ).PipeNodeWidth;
-			TempBelow = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, PipeDepth + 1, PipeWidth );
-			TempBeside = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, PipeDepth, PipeWidth - 1 );
-			TempAbove = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, PipeDepth - 1, PipeWidth );
+			TempBelow = PipeHT( PipeHTNum ).T( PipeWidth, PipeDepth + 1, LengthIndex, CurrentTimeIndex );
+			TempBeside = PipeHT( PipeHTNum ).T( PipeWidth - 1, PipeDepth, LengthIndex, CurrentTimeIndex );
+			TempAbove = PipeHT( PipeHTNum ).T( PipeWidth, PipeDepth - 1, LengthIndex, CurrentTimeIndex );
 			EnvironmentTemp = ( TempBelow + TempBeside + TempAbove ) / 3.0;
 
 			PipeHT( PipeHTNum ).TentativeFluidTemp( LengthIndex ) = ( A2 * PipeHT( PipeHTNum ).TentativeFluidTemp( LengthIndex - 1 ) + A3 / B1 * ( B3 * EnvironmentTemp + B4 * PipeHT( PipeHTNum ).PreviousPipeTemp( LengthIndex ) ) + A4 * PipeHT( PipeHTNum ).PreviousFluidTemp( LengthIndex ) ) / ( A1 - A3 * B2 / B1 );
@@ -1481,7 +1380,6 @@ namespace PipeHeatTransfer {
 		using DataEnvironment::DifSolarRad;
 		using DataEnvironment::SOLCOS;
 		using DataGlobals::Pi;
-		using DataGlobals::WarmupFlag;
 		using DataGlobals::TimeStep;
 		using DataGlobals::HourOfDay;
 		using DataGlobals::KelvinConv;
@@ -1505,7 +1403,7 @@ namespace PipeHeatTransfer {
 		static Real64 ConvCoef( 0.0 ); // Current convection coefficient = f(Wind Speed,Roughness)
 		static Real64 RadCoef( 0.0 ); // Current radiation coefficient
 		static Real64 QSolAbsorbed( 0.0 ); // Current total solar energy absorbed
-		FArray3D< Real64 > T_O( NumSections, PipeHT( PipeHTNum ).NumDepthNodes, PipeHT( PipeHTNum ).PipeNodeWidth );
+		Array3D< Real64 > T_O( PipeHT( PipeHTNum ).PipeNodeWidth, PipeHT( PipeHTNum ).NumDepthNodes, NumSections );
 
 		//Local variable placeholders for code readability
 		static Real64 A1( 0.0 ); // Placeholder for CoefA1
@@ -1531,7 +1429,7 @@ namespace PipeHeatTransfer {
 		PipeHT( PipeHTNum ).CoefA1 = PipeHT( PipeHTNum ).FourierDS / ( 1 + 4 * PipeHT( PipeHTNum ).FourierDS ); //Eq. D2
 		PipeHT( PipeHTNum ).CoefA2 = 1 / ( 1 + 4 * PipeHT( PipeHTNum ).FourierDS ); //Eq. D3
 
-		IterationLoop: for ( IterationIndex = 1; IterationIndex <= MaxIterations; ++IterationIndex ) {
+		for ( IterationIndex = 1; IterationIndex <= MaxIterations; ++IterationIndex ) {
 			if ( IterationIndex == MaxIterations ) {
 				ShowWarningError( "BuriedPipeHeatTransfer: Large number of iterations detected in object: " + PipeHT( PipeHTNum ).Name );
 			}
@@ -1540,7 +1438,7 @@ namespace PipeHeatTransfer {
 			for ( LengthIndex = 2; LengthIndex <= PipeHT( PipeHTNum ).NumSections; ++LengthIndex ) {
 				for ( DepthIndex = 1; DepthIndex <= PipeHT( PipeHTNum ).NumDepthNodes - 1; ++DepthIndex ) {
 					for ( WidthIndex = 2; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
-						T_O( LengthIndex, DepthIndex, WidthIndex ) = PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex );
+						T_O( WidthIndex, DepthIndex, LengthIndex ) = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex );
 					}
 				}
 			}
@@ -1553,7 +1451,7 @@ namespace PipeHeatTransfer {
 						if ( DepthIndex == 1 ) { //Soil Surface Boundary
 
 							//If on soil boundary, load up local variables and perform calculations
-							NodePast = PipeHT( PipeHTNum ).T( PreviousTimeIndex, LengthIndex, DepthIndex, WidthIndex );
+							NodePast = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, PreviousTimeIndex );
 							PastNodeTempAbs = NodePast + KelvinConv;
 							SkyTempAbs = SkyTemp + KelvinConv;
 							TopRoughness = PipeHT( PipeHTNum ).SoilRoughness;
@@ -1587,21 +1485,21 @@ namespace PipeHeatTransfer {
 							if ( WidthIndex == PipeHT( PipeHTNum ).PipeNodeWidth ) { //Symmetric centerline boundary
 
 								//-Coefficients and Temperatures
-								NodeBelow = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex + 1, WidthIndex );
-								NodeLeft = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex - 1 );
+								NodeBelow = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex + 1, LengthIndex, CurrentTimeIndex );
+								NodeLeft = PipeHT( PipeHTNum ).T( WidthIndex - 1, DepthIndex, LengthIndex, CurrentTimeIndex );
 
 								//-Update Equation, basically a detailed energy balance at the surface
-								PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = ( QSolAbsorbed + RadCoef * SkyTemp + ConvCoef * OutDryBulbTemp + ( kSoil / dS ) * ( NodeBelow + 2 * NodeLeft ) + ( rho * Cp / DeltaTime ) * NodePast ) / ( RadCoef + ConvCoef + 3 * ( kSoil / dS ) + ( rho * Cp / DeltaTime ) );
+								PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = ( QSolAbsorbed + RadCoef * SkyTemp + ConvCoef * OutDryBulbTemp + ( kSoil / dS ) * ( NodeBelow + 2 * NodeLeft ) + ( rho * Cp / DeltaTime ) * NodePast ) / ( RadCoef + ConvCoef + 3 * ( kSoil / dS ) + ( rho * Cp / DeltaTime ) );
 
 							} else { //Soil surface, but not on centerline
 
 								//-Coefficients and Temperatures
-								NodeBelow = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex + 1, WidthIndex );
-								NodeLeft = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex - 1 );
-								NodeRight = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex + 1 );
+								NodeBelow = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex + 1, LengthIndex, CurrentTimeIndex );
+								NodeLeft = PipeHT( PipeHTNum ).T( WidthIndex - 1, DepthIndex, LengthIndex, CurrentTimeIndex );
+								NodeRight = PipeHT( PipeHTNum ).T( WidthIndex + 1, DepthIndex, LengthIndex, CurrentTimeIndex );
 
 								//-Update Equation
-								PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = ( QSolAbsorbed + RadCoef * SkyTemp + ConvCoef * OutDryBulbTemp + ( kSoil / dS ) * ( NodeBelow + NodeLeft + NodeRight ) + ( rho * Cp / DeltaTime ) * NodePast ) / ( RadCoef + ConvCoef + 3 * ( kSoil / dS ) + ( rho * Cp / DeltaTime ) );
+								PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = ( QSolAbsorbed + RadCoef * SkyTemp + ConvCoef * OutDryBulbTemp + ( kSoil / dS ) * ( NodeBelow + NodeLeft + NodeRight ) + ( rho * Cp / DeltaTime ) * NodePast ) / ( RadCoef + ConvCoef + 3 * ( kSoil / dS ) + ( rho * Cp / DeltaTime ) );
 
 							} //Soil-to-air surface node structure
 
@@ -1613,20 +1511,20 @@ namespace PipeHeatTransfer {
 								CalcPipesHeatTransfer( PipeHTNum, LengthIndex );
 
 								//-Update node for cartesian system
-								PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = PipeHT( PipeHTNum ).PipeTemp( LengthIndex );
+								PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = PipeHT( PipeHTNum ).PipeTemp( LengthIndex );
 
 							} else if ( DepthIndex != 1 ) { //Not surface node
 
 								//-Coefficients and Temperatures
-								NodeLeft = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex - 1 );
-								NodeAbove = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex - 1, WidthIndex );
-								NodeBelow = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex + 1, WidthIndex );
-								NodePast = PipeHT( PipeHTNum ).T( CurrentTimeIndex - 1, LengthIndex, DepthIndex, WidthIndex );
+								NodeLeft = PipeHT( PipeHTNum ).T( WidthIndex - 1, DepthIndex, LengthIndex, CurrentTimeIndex );
+								NodeAbove = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex - 1, LengthIndex, CurrentTimeIndex );
+								NodeBelow = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex + 1, LengthIndex, CurrentTimeIndex );
+								NodePast = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, CurrentTimeIndex - 1 );
 								A1 = PipeHT( PipeHTNum ).CoefA1;
 								A2 = PipeHT( PipeHTNum ).CoefA2;
 
 								//-Update Equation
-								PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = A1 * ( NodeBelow + NodeAbove + 2 * NodeLeft ) + A2 * NodePast;
+								PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = A1 * ( NodeBelow + NodeAbove + 2 * NodeLeft ) + A2 * NodePast;
 
 							} //Symmetric centerline node structure
 
@@ -1635,14 +1533,14 @@ namespace PipeHeatTransfer {
 							//-Coefficients and Temperatures
 							A1 = PipeHT( PipeHTNum ).CoefA1;
 							A2 = PipeHT( PipeHTNum ).CoefA2;
-							NodeBelow = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex + 1, WidthIndex );
-							NodeAbove = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex - 1, WidthIndex );
-							NodeRight = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex + 1 );
-							NodeLeft = PipeHT( PipeHTNum ).T( CurrentTimeIndex, LengthIndex, DepthIndex, WidthIndex - 1 );
-							NodePast = PipeHT( PipeHTNum ).T( CurrentTimeIndex - 1, LengthIndex, DepthIndex, WidthIndex );
+							NodeBelow = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex + 1, LengthIndex, CurrentTimeIndex );
+							NodeAbove = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex - 1, LengthIndex, CurrentTimeIndex );
+							NodeRight = PipeHT( PipeHTNum ).T( WidthIndex + 1, DepthIndex, LengthIndex, CurrentTimeIndex );
+							NodeLeft = PipeHT( PipeHTNum ).T( WidthIndex - 1, DepthIndex, LengthIndex, CurrentTimeIndex );
+							NodePast = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, CurrentTimeIndex - 1 );
 
 							//-Update Equation
-							PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex ) = A1 * ( NodeBelow + NodeAbove + NodeRight + NodeLeft ) + A2 * NodePast; //Eq. D1
+							PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex ) = A1 * ( NodeBelow + NodeAbove + NodeRight + NodeLeft ) + A2 * NodePast; //Eq. D1
 
 						}
 					}
@@ -1653,8 +1551,8 @@ namespace PipeHeatTransfer {
 			for ( LengthIndex = 2; LengthIndex <= PipeHT( PipeHTNum ).NumSections; ++LengthIndex ) {
 				for ( DepthIndex = 1; DepthIndex <= PipeHT( PipeHTNum ).NumDepthNodes - 1; ++DepthIndex ) {
 					for ( WidthIndex = 2; WidthIndex <= PipeHT( PipeHTNum ).PipeNodeWidth; ++WidthIndex ) {
-						Ttemp = PipeHT( PipeHTNum ).T( TentativeTimeIndex, LengthIndex, DepthIndex, WidthIndex );
-						if ( std::abs( T_O( LengthIndex, DepthIndex, WidthIndex ) - Ttemp ) > ConvCrit ) goto IterationLoop_loop;
+						Ttemp = PipeHT( PipeHTNum ).T( WidthIndex, DepthIndex, LengthIndex, TentativeTimeIndex );
+						if ( std::abs( T_O( WidthIndex, DepthIndex, LengthIndex ) - Ttemp ) > ConvCrit ) goto IterationLoop_loop;
 					}
 				}
 			}
@@ -1812,7 +1710,6 @@ namespace PipeHeatTransfer {
 
 		// Using/Aliasing
 		using DataGlobals::BeginEnvrnFlag;
-		using DataHeatBalance::ZoneIntGain;
 
 		// Locals
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
@@ -1887,10 +1784,10 @@ namespace PipeHeatTransfer {
 		static std::string const RoutineName( "PipeHeatTransfer::CalcPipeHeatTransCoef: " );
 		Real64 const MaxLaminarRe( 2300.0 ); // Maximum Reynolds number for laminar flow
 		int const NumOfPropDivisions( 13 ); // intervals in property correlation
-		static FArray1D< Real64 > const Temps( NumOfPropDivisions, { 1.85, 6.85, 11.85, 16.85, 21.85, 26.85, 31.85, 36.85, 41.85, 46.85, 51.85, 56.85, 61.85 } ); // Temperature, in C
-		static FArray1D< Real64 > const Mu( NumOfPropDivisions, { 0.001652, 0.001422, 0.001225, 0.00108, 0.000959, 0.000855, 0.000769, 0.000695, 0.000631, 0.000577, 0.000528, 0.000489, 0.000453 } ); // Viscosity, in Ns/m2
-		static FArray1D< Real64 > const Conductivity( NumOfPropDivisions, { 0.574, 0.582, 0.590, 0.598, 0.606, 0.613, 0.620, 0.628, 0.634, 0.640, 0.645, 0.650, 0.656 } ); // Conductivity, in W/mK
-		static FArray1D< Real64 > const Pr( NumOfPropDivisions, { 12.22, 10.26, 8.81, 7.56, 6.62, 5.83, 5.20, 4.62, 4.16, 3.77, 3.42, 3.15, 2.88 } ); // Prandtl number (dimensionless)
+		static Array1D< Real64 > const Temps( NumOfPropDivisions, { 1.85, 6.85, 11.85, 16.85, 21.85, 26.85, 31.85, 36.85, 41.85, 46.85, 51.85, 56.85, 61.85 } ); // Temperature, in C
+		static Array1D< Real64 > const Mu( NumOfPropDivisions, { 0.001652, 0.001422, 0.001225, 0.00108, 0.000959, 0.000855, 0.000769, 0.000695, 0.000631, 0.000577, 0.000528, 0.000489, 0.000453 } ); // Viscosity, in Ns/m2
+		static Array1D< Real64 > const Conductivity( NumOfPropDivisions, { 0.574, 0.582, 0.590, 0.598, 0.606, 0.613, 0.620, 0.628, 0.634, 0.640, 0.645, 0.650, 0.656 } ); // Conductivity, in W/mK
+		static Array1D< Real64 > const Pr( NumOfPropDivisions, { 12.22, 10.26, 8.81, 7.56, 6.62, 5.83, 5.20, 4.62, 4.16, 3.77, 3.42, 3.15, 2.88 } ); // Prandtl number (dimensionless)
 
 		// INTERFACE BLOCK SPECIFICATIONS
 		// na
@@ -2003,13 +1900,13 @@ namespace PipeHeatTransfer {
 		int const NumOfParamDivisions( 5 ); // intervals in property correlation
 		int const NumOfPropDivisions( 12 ); // intervals in property correlation
 
-		static FArray1D< Real64 > const CCoef( NumOfParamDivisions, { 0.989, 0.911, 0.683, 0.193, 0.027 } ); // correlation coefficient
-		static FArray1D< Real64 > const mExp( NumOfParamDivisions, { 0.33, 0.385, 0.466, 0.618, 0.805 } ); // exponent
-		static FArray1D< Real64 > const LowerBound( NumOfParamDivisions, { 0.4, 4.0, 40.0, 4000.0, 40000.0 } ); // upper bound of correlation range
-		static FArray1D< Real64 > const UpperBound( NumOfParamDivisions, { 4.0, 40.0, 4000.0, 40000.0, 400000.0 } ); // lower bound of correlation range
+		static Array1D< Real64 > const CCoef( NumOfParamDivisions, { 0.989, 0.911, 0.683, 0.193, 0.027 } ); // correlation coefficient
+		static Array1D< Real64 > const mExp( NumOfParamDivisions, { 0.33, 0.385, 0.466, 0.618, 0.805 } ); // exponent
+		static Array1D< Real64 > const LowerBound( NumOfParamDivisions, { 0.4, 4.0, 40.0, 4000.0, 40000.0 } ); // upper bound of correlation range
+		static Array1D< Real64 > const UpperBound( NumOfParamDivisions, { 4.0, 40.0, 4000.0, 40000.0, 400000.0 } ); // lower bound of correlation range
 
-		static FArray1D< Real64 > const Temperature( NumOfPropDivisions, { -73.0, -23.0, -10.0, 0.0, 10.0, 20.0, 27.0, 30.0, 40.0, 50.0, 76.85, 126.85 } ); // temperature [C]
-		static FArray1D< Real64 > const DynVisc( NumOfPropDivisions, { 75.52e-7, 11.37e-6, 12.44e-6, 13.3e-6, 14.18e-6, 15.08e-6, 15.75e-6, 16e-6, 16.95e-6, 17.91e-6, 20.92e-6, 26.41e-6 } ); // dynamic viscosity [m^2/s]
+		static Array1D< Real64 > const Temperature( NumOfPropDivisions, { -73.0, -23.0, -10.0, 0.0, 10.0, 20.0, 27.0, 30.0, 40.0, 50.0, 76.85, 126.85 } ); // temperature [C]
+		static Array1D< Real64 > const DynVisc( NumOfPropDivisions, { 75.52e-7, 11.37e-6, 12.44e-6, 13.3e-6, 14.18e-6, 15.08e-6, 15.75e-6, 16e-6, 16.95e-6, 17.91e-6, 20.92e-6, 26.41e-6 } ); // dynamic viscosity [m^2/s]
 
 		// INTERFACE BLOCK SPECIFICATIONS
 		// na
@@ -2026,7 +1923,6 @@ namespace PipeHeatTransfer {
 		Real64 AirVisc;
 		Real64 AirVel;
 		Real64 AirTemp;
-		Real64 MidTemp;
 		Real64 PipeOD;
 		bool ViscositySet;
 		bool CoefSet;
@@ -2129,18 +2025,16 @@ namespace PipeHeatTransfer {
 		// Returns a temperature to be used on the boundary of the buried pipe model domain
 
 		// METHODOLOGY EMPLOYED:
-		// Kusuda and Achenbach correlation is used
 
 		// REFERENCES: See Module Level Description
 
 		// Using/Aliasing
-		using DataGlobals::Pi;
+		using DataGlobals::SecsInDay;
 
-		// Return value
+		Real64 curSimTime = DayOfSim * SecsInDay;
 		Real64 TBND;
 
-		//Kusuda and Achenbach
-		TBND = PipeHT( PipeHTNum ).AvgGroundTemp - PipeHT( PipeHTNum ).AvgGndTempAmp * std::exp( -z * std::sqrt( Pi / ( 365.0 * PipeHT( PipeHTNum ).SoilDiffusivityPerDay ) ) ) * std::cos( ( 2.0 * Pi / 365.0 ) * ( DayOfSim - PipeHT( PipeHTNum ).PhaseShiftDays - ( z / 2.0 ) * std::sqrt( 365.0 / ( Pi * PipeHT( PipeHTNum ).SoilDiffusivityPerDay ) ) ) );
+		TBND = PipeHT( PipeHTNum ).groundTempModel->getGroundTempAtTimeInSeconds( z, curSimTime );
 
 		return TBND;
 
@@ -2152,7 +2046,7 @@ namespace PipeHeatTransfer {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

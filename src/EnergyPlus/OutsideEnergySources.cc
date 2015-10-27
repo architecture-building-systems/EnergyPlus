@@ -3,7 +3,7 @@
 #include <string>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
+#include <ObjexxFCL/Array.functions.hh>
 #include <ObjexxFCL/Fmath.hh>
 
 // EnergyPlus Headers
@@ -57,7 +57,6 @@ namespace OutsideEnergySources {
 	using DataPlant::TypeOf_PurchHotWater;
 	using DataPlant::TypeOf_PurchChilledWater;
 	using DataPlant::ScanPlantLoopsForObject;
-	using DataPlant::PlantSizesOkayToFinalize;
 
 	// Data
 	//MODULE PARAMETER DEFINITIONS
@@ -70,18 +69,34 @@ namespace OutsideEnergySources {
 	int NumDistrictUnits( 0 );
 
 	// SUBROUTINE SPECIFICATIONS FOR MODULE OutsideEnergySources
-
+	namespace {
+	// These were static variables within different functions. They were pulled out into the namespace
+	// to facilitate easier unit testing of those functions.
+	// These are purposefully not in the header file as an extern variable. No one outside of this should
+	// use these. They are cleared by clear_state() for use by unit tests, but normal simulations should be unaffected.
+	// This is purposefully in an anonymous namespace so nothing outside this implementation file can use it.
+		bool SimOutsideEnergyGetInputFlag( true );
+	}
 	// Object Data
-	FArray1D< OutsideEnergySourceSpecs > EnergySource;
-	FArray1D< ReportVars > EnergySourceReport;
+	Array1D< OutsideEnergySourceSpecs > EnergySource;
+	Array1D< ReportVars > EnergySourceReport;
 
 	// Functions
+	void
+	clear_state()
+	{
+		NumDistrictUnits = 0;
+		SimOutsideEnergyGetInputFlag = true;
+		EnergySource.deallocate();
+		EnergySourceReport.deallocate();
+	}
+
 
 	void
 	SimOutsideEnergy(
-		std::string const & EnergyType,
+		std::string const & EP_UNUSED( EnergyType ),
 		std::string const & EquipName,
-		int const EquipFlowCtrl, // Flow control mode for the equipment
+		int const EP_UNUSED( EquipFlowCtrl ), // Flow control mode for the equipment
 		int & CompIndex,
 		bool const RunFlag,
 		bool const InitLoopEquip,
@@ -89,7 +104,7 @@ namespace OutsideEnergySources {
 		Real64 & MaxCap,
 		Real64 & MinCap,
 		Real64 & OptCap,
-		bool const FirstHVACIteration
+		bool const EP_UNUSED( FirstHVACIteration )
 	)
 	{
 
@@ -124,7 +139,9 @@ namespace OutsideEnergySources {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		static bool GetInputFlag( true ); // Get input once and once only
+		/////////// hoisted into namespace SimOutsideEnergyGetInputFlag ////////////
+		// static bool GetInputFlag( true ); // Get input once and once only
+		/////////////////////////////////////////////////
 		int EqNum;
 		Real64 InletTemp;
 		Real64 OutletTemp;
@@ -132,14 +149,14 @@ namespace OutsideEnergySources {
 		//FLOW
 
 		//GET INPUT
-		if ( GetInputFlag ) {
+		if ( SimOutsideEnergyGetInputFlag ) {
 			GetOutsideEnergySourcesInput();
-			GetInputFlag = false;
+			SimOutsideEnergyGetInputFlag = false;
 		}
 
 		// Find the correct Equipment
 		if ( CompIndex == 0 ) {
-			EqNum = FindItemInList( EquipName, EnergySource.Name(), NumDistrictUnits );
+			EqNum = FindItemInList( EquipName, EnergySource );
 			if ( EqNum == 0 ) {
 				ShowFatalError( "SimOutsideEnergy: Unit not found=" + EquipName );
 			}
@@ -160,10 +177,8 @@ namespace OutsideEnergySources {
 		//CALCULATE
 		if ( InitLoopEquip ) {
 			InitSimVars( EqNum, MassFlowRate, InletTemp, OutletTemp, MyLoad );
-			if ( ! EnergySource( EqNum ).isThisSized ) {
-				SizeDistrictEnergy( EqNum );
-				EnergySource( EqNum ).isThisSized = true;
-			}
+			SizeDistrictEnergy( EqNum );
+
 			MinCap = 0.0;
 			MaxCap = EnergySource( EqNum ).NomCap;
 			OptCap = EnergySource( EqNum ).NomCap;
@@ -208,6 +223,7 @@ namespace OutsideEnergySources {
 		using ScheduleManager::GetScheduleIndex;
 		using ScheduleManager::CheckScheduleValueMinMax;
 		using DataGlobals::ScheduleAlwaysOn;
+		using DataSizing::AutoSize;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -256,7 +272,7 @@ namespace OutsideEnergySources {
 			if ( EnergySourceNum > 1 ) {
 				IsNotOK = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), EnergySource.Name(), EnergySourceNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), EnergySource, EnergySourceNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 				if ( IsNotOK ) {
 					ErrorsFound = true;
 					if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -270,6 +286,9 @@ namespace OutsideEnergySources {
 			EnergySource( EnergySourceNum ).OutletNodeNum = GetOnlySingleNode( cAlphaArgs( 3 ), ErrorsFound, cCurrentModuleObject, cAlphaArgs( 1 ), NodeType_Water, NodeConnectionType_Outlet, 1, ObjectIsNotParent );
 			TestCompSet( cCurrentModuleObject, cAlphaArgs( 1 ), cAlphaArgs( 2 ), cAlphaArgs( 3 ), "Hot Water Nodes" );
 			EnergySource( EnergySourceNum ).NomCap = rNumericArgs( 1 );
+			if ( EnergySource( EnergySourceNum ).NomCap == AutoSize ) {
+				EnergySource( EnergySourceNum ).NomCapWasAutoSized = true;
+			}
 			EnergySource( EnergySourceNum ).EnergyTransfer = 0.0;
 			EnergySource( EnergySourceNum ).EnergyRate = 0.0;
 			EnergySource( EnergySourceNum ).EnergyType = EnergyType_DistrictHeating;
@@ -316,7 +335,7 @@ namespace OutsideEnergySources {
 			if ( EnergySourceNum > 1 ) {
 				IsNotOK = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), EnergySource.Name(), EnergySourceNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), EnergySource, EnergySourceNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 				if ( IsNotOK ) {
 					ErrorsFound = true;
 					if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -330,6 +349,9 @@ namespace OutsideEnergySources {
 			EnergySource( EnergySourceNum ).OutletNodeNum = GetOnlySingleNode( cAlphaArgs( 3 ), ErrorsFound, cCurrentModuleObject, cAlphaArgs( 1 ), NodeType_Water, NodeConnectionType_Outlet, 1, ObjectIsNotParent );
 			TestCompSet( cCurrentModuleObject, cAlphaArgs( 1 ), cAlphaArgs( 2 ), cAlphaArgs( 3 ), "Chilled Water Nodes" );
 			EnergySource( EnergySourceNum ).NomCap = rNumericArgs( 1 );
+			if ( EnergySource( EnergySourceNum ).NomCap == AutoSize ) {
+				EnergySource( EnergySourceNum ).NomCapWasAutoSized = true;
+			}
 			EnergySource( EnergySourceNum ).EnergyTransfer = 0.0;
 			EnergySource( EnergySourceNum ).EnergyRate = 0.0;
 			EnergySource( EnergySourceNum ).EnergyType = EnergyType_DistrictCooling;
@@ -407,8 +429,6 @@ namespace OutsideEnergySources {
 		using PlantUtilities::InitComponentNodes;
 		using PlantUtilities::RegisterPlantCompDesignFlow;
 		using DataGlobals::BeginEnvrnFlag;
-		using DataPlant::PlantSizesOkayToFinalize;
-		using DataPlant::PlantSizeNotComplete;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -456,7 +476,6 @@ namespace OutsideEnergySources {
 			// component model has not design flow rates, using data for overall plant loop
 			InitComponentNodes( PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).MinMassFlowRate, PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).MaxMassFlowRate, EnergySource( EnergySourceNum ).InletNodeNum, EnergySource( EnergySourceNum ).OutletNodeNum, EnergySource( EnergySourceNum ).LoopNum, EnergySource( EnergySourceNum ).LoopSideNum, EnergySource( EnergySourceNum ).BranchNum, EnergySource( EnergySourceNum ).CompNum );
 			EnergySource( EnergySourceNum ).BeginEnvrnInitFlag = false;
-			if ( PlantSizesOkayToFinalize && PlantSizeNotComplete ) SizeDistrictEnergy( EnergySourceNum );
 		}
 		if ( ! BeginEnvrnFlag ) EnergySource( EnergySourceNum ).BeginEnvrnInitFlag = true;
 
@@ -489,18 +508,18 @@ namespace OutsideEnergySources {
 	// *****************************************************************************
 
 	void
-	SizeDistrictEnergy( 
-		int const EnergySourceNum 
+	SizeDistrictEnergy(
+		int const EnergySourceNum
 	)
 	{
 		// SUBROUTINE INFORMATION:
 		//       AUTHOR         Daeho Kang
 		//       DATE WRITTEN   April 2014
-		//       MODIFIED       
+		//       MODIFIED
 		//       RE-ENGINEERED  na
 
 		// PURPOSE OF THIS SUBROUTINE:
-		//  This subroutine is for sizing capacities of district cooling and heating objects. 
+		//  This subroutine is for sizing capacities of district cooling and heating objects.
 
 		// USE STATEMENTS:
 		using DataSizing::AutoSize;
@@ -509,11 +528,13 @@ namespace OutsideEnergySources {
 		using ReportSizingManager::ReportSizingOutput;
 		using FluidProperties::GetDensityGlycol;
 		using FluidProperties::GetSpecificHeatGlycol;
+		using DataPlant::PlantFirstSizesOkayToFinalize;
+		using DataPlant::PlantFirstSizesOkayToReport;
+		using DataPlant::PlantFinalSizesOkayToReport;
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		int PltSizNum( 0 );	// Plant sizing index for hot water loop
 		bool ErrorsFound( false );	// If errors detected in input
-		bool IsAutoSize( false );	// Indicator to autosize for reporting
 		Real64 NomCapDes( 0.0 );	// Autosized nominal capacity for reporting
 		Real64 NomCapUser( 0.0 );	// Hardsized nominal capacity for reporting
 		Real64 rho( 0.0 );	// Density (kg/m3)
@@ -528,44 +549,51 @@ namespace OutsideEnergySources {
 		}
 
 		// Do the sizing here
-		if ( EnergySource( EnergySourceNum ).NomCap == AutoSize ) {
-			IsAutoSize = true;
-		}
+
 		PltSizNum = PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).PlantSizNum;
 		if ( PltSizNum > 0 ) {
 			rho = GetDensityGlycol( PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).FluidName, InitConvTemp, PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).FluidIndex, "SizeDistrict" + typeName );
 			Cp = GetSpecificHeatGlycol( PlantLoop( EnergySource( EnergySourceNum ).LoopNum ).FluidName, InitConvTemp, PlantLoop(EnergySource( EnergySourceNum).LoopNum ).FluidIndex, "SizeDistrict" + typeName );
 			NomCapDes = Cp * rho * PlantSizData( PltSizNum ).DeltaT * PlantSizData( PltSizNum ).DesVolFlowRate;
-			if ( PlantSizesOkayToFinalize ) {
-				if ( IsAutoSize ) {
+			if ( PlantFirstSizesOkayToFinalize ) {
+				if ( EnergySource( EnergySourceNum ).NomCapWasAutoSized ) {
 					EnergySource( EnergySourceNum ).NomCap = NomCapDes;
-					ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name, "Design Size Nominal Capacity [W]", NomCapDes );
+					if ( PlantFinalSizesOkayToReport ) {
+						ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name,
+							"Design Size Nominal Capacity [W]", NomCapDes );
+					}
+					if ( PlantFirstSizesOkayToReport ) {
+						ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name,
+							"Initial Design Size Nominal Capacity [W]", NomCapDes );
+					}
 				} else {  // Hard-size with sizing data
 					if ( EnergySource( EnergySourceNum ).NomCap > 0.0 && NomCapDes > 0.0 ) {
 						NomCapUser = EnergySource( EnergySourceNum ).NomCap;
-						ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name, "Design Size Nominal Capacity [W]", NomCapDes, "User-Specified Nominal Capacity [W]", NomCapUser );
-						if ( DisplayExtraWarnings ) {
-							if ( ( std::abs( NomCapDes - NomCapUser ) / NomCapUser ) > AutoVsHardSizingThreshold ) {
-								ShowMessage( "SizeDistrict" + typeName + ": Potential issue with equipment sizing for " + EnergySource( EnergySourceNum ).Name );
-								ShowContinueError ( "User-Specified Nominal Capacity of " + RoundSigDigits( NomCapUser, 2 ) + " [W]" );
-								ShowContinueError( "differs from Design Size Nominal Capacity of " + RoundSigDigits( NomCapDes, 2 ) + " [W]" );
-								ShowContinueError( "This may, or may not, indicate mismatched component sizes." );
-								ShowContinueError( "Verify that the value entered is intended and is consistent with other components." );
+						if ( PlantFinalSizesOkayToReport ) {
+							ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name,
+								"Design Size Nominal Capacity [W]", NomCapDes, "User-Specified Nominal Capacity [W]", NomCapUser );
+							if ( DisplayExtraWarnings ) {
+								if ( ( std::abs( NomCapDes - NomCapUser ) / NomCapUser ) > AutoVsHardSizingThreshold ) {
+									ShowMessage( "SizeDistrict" + typeName + ": Potential issue with equipment sizing for " + EnergySource( EnergySourceNum ).Name );
+									ShowContinueError ( "User-Specified Nominal Capacity of " + RoundSigDigits( NomCapUser, 2 ) + " [W]" );
+									ShowContinueError( "differs from Design Size Nominal Capacity of " + RoundSigDigits( NomCapDes, 2 ) + " [W]" );
+									ShowContinueError( "This may, or may not, indicate mismatched component sizes." );
+									ShowContinueError( "Verify that the value entered is intended and is consistent with other components." );
+								}
 							}
 						}
 					}
 				}
 			}
 		} else {
-			if ( IsAutoSize ) {
+			if ( EnergySource( EnergySourceNum ).NomCapWasAutoSized && PlantFirstSizesOkayToFinalize ) {
 				ShowSevereError( "Autosizing of District " + typeName + " nominal capacity requires a loop Sizing:Plant object" );
 				ShowContinueError( "Occurs in District" + typeName + " object=" + EnergySource( EnergySourceNum ).Name );
 				ErrorsFound = true;
-			} else {
-				if ( EnergySource( EnergySourceNum ).NomCap > 0.0 ) {
-					ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name, 
-						"User-Specified Nominal Capacity [W]", EnergySource( EnergySourceNum ).NomCap );
-				}
+			}
+			if ( ! EnergySource( EnergySourceNum ).NomCapWasAutoSized && EnergySource( EnergySourceNum ).NomCap > 0.0 && PlantFinalSizesOkayToReport ) {
+				ReportSizingOutput( "District" + typeName, EnergySource( EnergySourceNum ).Name,
+				 "User-Specified Nominal Capacity [W]", EnergySource( EnergySourceNum ).NomCap );
 			}
 		}
 		if ( ErrorsFound ) {
@@ -739,7 +767,7 @@ namespace OutsideEnergySources {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

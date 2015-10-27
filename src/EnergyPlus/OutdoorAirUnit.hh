@@ -2,7 +2,7 @@
 #define OutdoorAirUnit_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1D.hh>
+#include <ObjexxFCL/Array1D.hh>
 
 // EnergyPlus Headers
 #include <EnergyPlus.hh>
@@ -44,7 +44,7 @@ namespace OutdoorAirUnit {
 	extern int const CoolingMode; // normal cooling coil operation
 	extern int const NeutralMode; // signal coil shouldn't run
 
-	extern FArray1D_string const CurrentModuleObjects;
+	extern Array1D_string const CurrentModuleObjects;
 
 	// Parameters below (CO - Current module Object.  used primarily in Get Inputs)
 	// Multiple Get Input routines in this module or these would be in individual routines.
@@ -56,12 +56,12 @@ namespace OutdoorAirUnit {
 	// MODULE VARIABLE DECLARATIONS:
 	extern int NumOfOAUnits; // Number of outdoor air unit in the input file
 	extern Real64 OAMassFlowRate; // Outside air mass flow rate for the zone outdoor air unit
-	extern FArray1D_bool MyOneTimeErrorFlag;
+	extern Array1D_bool MyOneTimeErrorFlag;
 	extern bool GetOutdoorAirUnitInputFlag; // Flag set to make sure you get input once
 
 	// Autosizing variables
-	extern FArray1D_bool MySizeFlag;
-	extern FArray1D_bool CheckEquipName;
+	extern Array1D_bool MySizeFlag;
+	extern Array1D_bool CheckEquipName;
 
 	// SUBROUTINE SPECIFICATIONS FOR MODULE OUTDOOR AIR UNIT
 	//PRIVATE UpdateOutdoorAirUnit
@@ -193,7 +193,10 @@ namespace OutdoorAirUnit {
 		Real64 ExtAirMassFlow; // kg/s
 		std::string ExtAirSchedName; // schedule of fraction for exhaust air
 		int ExtOutAirSchedPtr; // index to schedule
-		Real64 MaxAirMassFlow; // kg/s
+		Real64 SMaxAirMassFlow; // kg/s
+		Real64 EMaxAirMassFlow; // kg/s
+		Real64 SFanMaxAirVolFlow; // m3/s
+		Real64 EFanMaxAirVolFlow; // m3/s
 		std::string HiCtrlTempSched; // Schedule name for the High Control Air temperature
 		int HiCtrlTempSchedPtr; // Schedule index for the High Control Air temperature
 		std::string LoCtrlTempSched; // Schedule name for the Low Control Air temperature
@@ -209,7 +212,7 @@ namespace OutdoorAirUnit {
 		Real64 CompOutSetTemp; // component outlet setpoint temperature
 		int AvailStatus;
 		std::string AvailManagerListName; // Name of an availability manager list object
-		FArray1D< OAEquipList > OAEquip;
+		Array1D< OAEquipList > OAEquip;
 		// Report data
 		Real64 TotCoolingRate; // Rate of total cooling delivered to the zone [W]
 		Real64 TotCoolingEnergy; // Total cooling energy delivered by the OAU supply air to the zone [J]
@@ -252,7 +255,10 @@ namespace OutdoorAirUnit {
 			ExtAirVolFlow( 0.0 ),
 			ExtAirMassFlow( 0.0 ),
 			ExtOutAirSchedPtr( 0 ),
-			MaxAirMassFlow( 0.0 ),
+			SMaxAirMassFlow( 0.0 ),
+			EMaxAirMassFlow( 0.0 ),
+			SFanMaxAirVolFlow( 0.0 ),
+			EFanMaxAirVolFlow( 0.0 ),
 			HiCtrlTempSchedPtr( 0 ),
 			LoCtrlTempSchedPtr( 0 ),
 			OperatingMode( 0 ),
@@ -314,7 +320,10 @@ namespace OutdoorAirUnit {
 			Real64 const ExtAirMassFlow, // kg/s
 			std::string const & ExtAirSchedName, // schedule of fraction for exhaust air
 			int const ExtOutAirSchedPtr, // index to schedule
-			Real64 const MaxAirMassFlow, // kg/s
+			Real64 const SMaxAirMassFlow, // kg/s
+			Real64 const EMaxAirMassFlow, // kg/s
+			Real64 const SFanMaxAirVolFlow, // m3/s
+			Real64 const EFanMaxAirVolFlow, // m3/s
 			std::string const & HiCtrlTempSched, // Schedule name for the High Control Air temperature
 			int const HiCtrlTempSchedPtr, // Schedule index for the High Control Air temperature
 			std::string const & LoCtrlTempSched, // Schedule name for the Low Control Air temperature
@@ -330,7 +339,7 @@ namespace OutdoorAirUnit {
 			Real64 const CompOutSetTemp, // component outlet setpoint temperature
 			int const AvailStatus,
 			std::string const & AvailManagerListName, // Name of an availability manager list object
-			FArray1< OAEquipList > const & OAEquip,
+			Array1< OAEquipList > const & OAEquip,
 			Real64 const TotCoolingRate, // Rate of total cooling delivered to the zone [W]
 			Real64 const TotCoolingEnergy, // Total cooling energy delivered by the OAU supply air to the zone [J]
 			Real64 const SensCoolingRate, // Rate of sensible cooling delivered to the zone [W]
@@ -378,7 +387,10 @@ namespace OutdoorAirUnit {
 			ExtAirMassFlow( ExtAirMassFlow ),
 			ExtAirSchedName( ExtAirSchedName ),
 			ExtOutAirSchedPtr( ExtOutAirSchedPtr ),
-			MaxAirMassFlow( MaxAirMassFlow ),
+			SMaxAirMassFlow( SMaxAirMassFlow ),
+			EMaxAirMassFlow( EMaxAirMassFlow ),
+			SFanMaxAirVolFlow( SFanMaxAirVolFlow ),
+			EFanMaxAirVolFlow( EFanMaxAirVolFlow ),
 			HiCtrlTempSched( HiCtrlTempSched ),
 			HiCtrlTempSchedPtr( HiCtrlTempSchedPtr ),
 			LoCtrlTempSched( LoCtrlTempSched ),
@@ -414,7 +426,7 @@ namespace OutdoorAirUnit {
 	};
 
 	// Object Data
-	extern FArray1D< OAUnitData > OutAirUnit;
+	extern Array1D< OAUnitData > OutAirUnit;
 
 	// Functions
 
@@ -495,11 +507,16 @@ namespace OutdoorAirUnit {
 	int
 	GetOutdoorAirUnitReturnAirNode( int const OAUnitNum );
 
+	// Clears the global data in OutdoorAirUnit.
+	// Needed for unit tests, should not be normally called.
+	void
+	clear_state();
+
 	//*****************************************************************************************
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

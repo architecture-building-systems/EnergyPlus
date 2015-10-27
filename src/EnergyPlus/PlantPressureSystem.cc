@@ -2,8 +2,8 @@
 #include <cmath>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
-#include <ObjexxFCL/FArray1D.hh>
+#include <ObjexxFCL/Array.functions.hh>
+#include <ObjexxFCL/Array1D.hh>
 #include <ObjexxFCL/Fmath.hh>
 
 // EnergyPlus Headers
@@ -61,7 +61,9 @@ namespace PlantPressureSystem {
 	// Data
 	// MODULE PARAMETER/ENUMERATIONS DEFINITIONS:
 	static std::string const BlankString;
-
+	namespace{
+		bool InitPressureDropOneTimeInit( true );
+	}
 	// DERIVED TYPE DEFINITIONS:
 	//TYPE, PUBLIC:: PlantPressureCurveData
 	//  CHARACTER(len=MaxNameLength) :: Name                    = Blank
@@ -95,6 +97,11 @@ namespace PlantPressureSystem {
 	//PUBLIC GetPressureCurveTypeAndIndex
 
 	// Functions
+	void
+	clear_state()
+	{
+		InitPressureDropOneTimeInit = true;
+	}
 
 	void
 	SimPressureDropSystem(
@@ -206,8 +213,6 @@ namespace PlantPressureSystem {
 		// SUBROUTINE ARGUMENT DEFINITIONS:
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
-		int const LoopType_Plant( 1 );
-		int const LoopType_Condenser( 2 );
 
 		// INTERFACE BLOCK SPECIFICATIONS:
 		// na
@@ -217,20 +222,20 @@ namespace PlantPressureSystem {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		//Initialization Variables
-		static bool OneTimeInit( true );
-		static FArray1D_bool LoopInit;
+
+		static Array1D_bool LoopInit;
 
 		//Simulation Variables
 		int NumBranches;
 		int BranchPressureTally;
-		static FArray1D_bool FullParallelBranchSetFound( 2 );
+		static Array1D_bool FullParallelBranchSetFound( 2 );
 		static bool CommonPipeErrorEncountered( false );
 
-		if ( OneTimeInit ) {
+		if ( InitPressureDropOneTimeInit ) {
 			//First allocate the initialization array to each plant loop
 			LoopInit.allocate( size( PlantLoop ) );
 			LoopInit = true;
-			OneTimeInit = false;
+			InitPressureDropOneTimeInit = false;
 		}
 
 		auto & loop( PlantLoop( LoopNum ) );
@@ -728,8 +733,8 @@ namespace PlantPressureSystem {
 		Real64 BranchPressureDrop;
 		Real64 LoopSidePressureDrop;
 		Real64 LoopPressureDrop;
-		FArray1D< Real64 > ParallelBranchPressureDrops;
-		FArray1D< Real64 > ParallelBranchInletPressures;
+		Array1D< Real64 > ParallelBranchPressureDrops;
+		Array1D< Real64 > ParallelBranchInletPressures;
 		int ParallelBranchCounter;
 		Real64 SplitterInletPressure;
 		Real64 MixerPressure;
@@ -1338,7 +1343,7 @@ namespace PlantPressureSystem {
 		bool Converged;
 		static int ZeroKWarningCounter( 0 );
 		static int MaxIterWarningCounter( 0 );
-		FArray1D< Real64 > MassFlowIterativeHistory( 3 );
+		Array1D< Real64 > MassFlowIterativeHistory( 3 );
 		Real64 MdotDeltaLatest;
 		Real64 MdotDeltaPrevious;
 		Real64 DampingFactor;
@@ -1447,7 +1452,7 @@ namespace PlantPressureSystem {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

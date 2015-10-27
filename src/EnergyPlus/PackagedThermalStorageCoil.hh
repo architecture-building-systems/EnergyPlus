@@ -2,7 +2,7 @@
 #define PackagedThermalStorageCoil_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1D.hh>
+#include <ObjexxFCL/Array1D.hh>
 #include <ObjexxFCL/Optional.hh>
 
 // EnergyPlus Headers
@@ -48,8 +48,11 @@ namespace PackagedThermalStorageCoil {
 	// MODULE VARIABLE DECLARATIONS:
 
 	extern int NumTESCoils;
-	extern FArray1D_bool CheckEquipName;
+	extern Array1D_bool CheckEquipName;
 	extern bool GetTESInputFlag;
+
+	extern int const DehumidControl_CoolReheat;
+
 	// SUBROUTINE SPECIFICATIONS FOR MODULE <module_name>:
 
 	// Types
@@ -908,7 +911,7 @@ namespace PackagedThermalStorageCoil {
 	};
 
 	// Object Data
-	extern FArray1D< PackagedTESCoolingCoilStruct > TESCoil;
+	extern Array1D< PackagedTESCoolingCoilStruct > TESCoil;
 
 	// Functions
 
@@ -973,6 +976,39 @@ namespace PackagedThermalStorageCoil {
 	CalcTESIceStorageTank( int const TESCoilNum );
 
 	void
+	ControlTESIceStorageTankCoil(
+		std::string const CoilName,
+		int CoilIndex,
+		std::string SystemType,
+		int const FanOpMode,
+		Real64 const DesiredOutletTemp,
+		Real64 const DesiredOutletHumRat,
+		Real64 & PartLoadFrac,
+		int & TESOpMode,
+		int & ControlType,
+		int & SensPLRIter,
+		int & SensPLRIterIndex,
+		int & SensPLRFail,
+		int & SensPLRFailIndex,
+		int & LatPLRIter,
+		int & LatPLRIterIndex,
+		int & LatPLRFail,
+		int & LatPLRFailIndex
+	);
+
+	Real64
+	TESCoilResidualFunction(
+		Real64 const PartLoadRatio, // compressor cycling ratio (1.0 is continuous, 0.0 is off)
+		Array1< Real64 > const & Par // par(1) = DX coil number
+	);
+
+	Real64
+	TESCoilHumRatResidualFunction(
+		Real64 const PartLoadRatio, // compressor cycling ratio (1.0 is continuous, 0.0 is off)
+		Array1< Real64 > const & Par // par(1) = DX coil number
+	);
+
+	void
 	UpdateColdWeatherProtection( int const TESCoilNum );
 
 	void
@@ -993,9 +1029,41 @@ namespace PackagedThermalStorageCoil {
 		Optional_string_const CurrentModuleObject = _
 	);
 
+	void
+	GetTESCoilAirInletNode(
+		std::string const & CoilName,
+		int & CoilAirInletNode,
+		bool & ErrorsFound,
+		std::string const CurrentModuleObject
+	);
+
+	void
+	GetTESCoilAirOutletNode(
+		std::string const & CoilName,
+		int & CoilAirOutletNode,
+		bool & ErrorsFound,
+		std::string const CurrentModuleObject
+	);
+
+	void
+	GetTESCoilCoolingCapacity(
+		std::string const & CoilName,
+		Real64 & CoilCoolCapacity,
+		bool & ErrorsFound,
+		std::string const CurrentModuleObject
+	);
+
+	void
+	GetTESCoilCoolingAirFlowRate(
+		std::string const & CoilName,
+		Real64 & CoilCoolAirFlow,
+		bool & ErrorsFound,
+		std::string const CurrentModuleObject
+	);
+
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

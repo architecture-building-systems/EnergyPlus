@@ -2,7 +2,7 @@
 #include <cmath>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
+#include <ObjexxFCL/Array.functions.hh>
 #include <ObjexxFCL/Fmath.hh>
 
 // EnergyPlus Headers
@@ -65,6 +65,7 @@ namespace HeatRecovery {
 	using DataGlobals::SysSizingCalc;
 	using DataGlobals::SecInHour;
 	using DataGlobals::ScheduleAlwaysOn;
+	using DataGlobals::DisplayExtraWarnings;
 	using namespace DataLoopNode;
 	using DataEnvironment::OutBaroPress;
 	using DataEnvironment::StdBaroPress;
@@ -117,7 +118,7 @@ namespace HeatRecovery {
 	// DX coils use DXCoilFullLoadOutAirHumRat when coil is ON otherwise inlet node
 	bool GetInputFlag( true ); // First time, input is "gotten"
 	bool CalledFromParentObject( true ); // Indicates that HX is called from parent object (this object is not on a branch)
-	FArray1D_bool CheckEquipName;
+	Array1D_bool CheckEquipName;
 
 	// SUBROUTINE SPECIFICATIONS FOR MODULE:
 
@@ -136,8 +137,8 @@ namespace HeatRecovery {
 	// External function calls
 
 	// Object Data
-	FArray1D< HeatExchCond > ExchCond;
-	FArray1D< BalancedDesDehumPerfData > BalDesDehumPerfData;
+	Array1D< HeatExchCond > ExchCond;
+	Array1D< BalancedDesDehumPerfData > BalDesDehumPerfData;
 
 	// Functions
 
@@ -202,7 +203,7 @@ namespace HeatRecovery {
 
 		// Find the correct unit index
 		if ( CompIndex == 0 ) {
-			HeatExchNum = FindItemInList( CompName, ExchCond.Name(), NumHeatExchangers );
+			HeatExchNum = FindItemInList( CompName, ExchCond );
 			if ( HeatExchNum == 0 ) {
 				ShowFatalError( "SimHeatRecovery: Unit not found=" + CompName );
 			}
@@ -250,7 +251,7 @@ namespace HeatRecovery {
 
 		} else if ( SELECT_CASE_var == HX_AIRTOAIR_GENERIC ) {
 
-			CalcAirToAirGenericHeatExch( HeatExchNum, HXUnitOn, FirstHVACIteration, EconomizerFlag, HighHumCtrlFlag );
+			CalcAirToAirGenericHeatExch( HeatExchNum, HXUnitOn, FirstHVACIteration, FanOpMode, EconomizerFlag, HighHumCtrlFlag, HXPartLoadRatio );
 
 		} else if ( SELECT_CASE_var == HX_DESICCANT_BALANCED ) {
 
@@ -352,7 +353,7 @@ namespace HeatRecovery {
 			ExchNum = ExchIndex;
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), ExchCond.Name(), ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), ExchCond, ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -415,7 +416,7 @@ namespace HeatRecovery {
 			ExchNum = ExchIndex + NumAirToAirPlateExchs;
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), ExchCond.Name(), ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), ExchCond, ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -526,7 +527,7 @@ namespace HeatRecovery {
 			ExchNum = ExchIndex + NumAirToAirPlateExchs + NumAirToAirGenericExchs;
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), ExchCond.Name(), ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), ExchCond, ExchNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -590,7 +591,7 @@ namespace HeatRecovery {
 			PerfDataNum = PerfDataIndex;
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), BalDesDehumPerfData.Name(), PerfDataNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), BalDesDehumPerfData, PerfDataNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				if ( IsBlank ) cAlphaArgs( 1 ) = "xxxxx";
@@ -1067,10 +1068,9 @@ namespace HeatRecovery {
 		Real64 RhoAir; // air density at outside pressure & standard temperature and humidity
 		Real64 CpAir; // heat capacity of air
 		// of humidity ratio and temperature
-		static bool MyEnvrnFlag( true );
 		static bool MyOneTimeAllocate( true );
-		static FArray1D_bool MySetPointTest;
-		static FArray1D_bool MySizeFlag;
+		static Array1D_bool MySetPointTest;
+		static Array1D_bool MySizeFlag;
 		int ErrStat; // error status returned by CalculateNTUfromEpsAndZ
 		bool FatalError; // fatal error flag
 		bool LocalWarningError; // warning error flag
@@ -1096,13 +1096,14 @@ namespace HeatRecovery {
 		LocalWarningError = false;
 
 		// Do the Begin Environment initializations
-		if ( BeginEnvrnFlag && MyEnvrnFlag ) {
+		if ( BeginEnvrnFlag && ExchCond( ExchNum ).myEnvrnFlag ) {
 			//I believe that all of these initializations should be taking place at the SCFM conditions
 			RhoAir = StdRhoAir;
 			//    RhoAir = PsyRhoAirFnPbTdbW(101325.0,20.0,0.0)  do we want standard air density at sea level for generic ERVs per ARI 1060?
 			CpAir = PsyCpAirFnWTdb( 0.0, 20.0 );
-			for ( ExIndex = 1; ExIndex <= NumHeatExchangers; ++ExIndex ) {
-
+			
+			ExIndex = ExchNum; // this replaces the loop that went over multiple at once
+			
 				{ auto const SELECT_CASE_var( ExchCond( ExIndex ).ExchTypeNum );
 
 				if ( SELECT_CASE_var == HX_AIRTOAIR_FLATPLATE ) {
@@ -1231,13 +1232,12 @@ namespace HeatRecovery {
 
 				}}
 
-			}
-			MyEnvrnFlag = false;
+			ExchCond( ExchNum ).myEnvrnFlag = false;
 
 		}
 
 		if ( ! BeginEnvrnFlag ) {
-			MyEnvrnFlag = true;
+			ExchCond( ExchNum ).myEnvrnFlag = true;
 		}
 
 		// Do these initializations every time step
@@ -1342,7 +1342,7 @@ namespace HeatRecovery {
 		// SUBROUTINE INFORMATION:
 		//       AUTHOR         Richard Raustad
 		//       DATE WRITTEN   October 2007
-		//       MODIFIED       na
+		//       MODIFIED       February 2014 Daeho Kang, enable sizing multiple HX types and add additional sizing fields
 		//       RE-ENGINEERED  na
 
 		// PURPOSE OF THIS SUBROUTINE:
@@ -1377,60 +1377,88 @@ namespace HeatRecovery {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		// na
+		bool IsAutoSize;				// Indicator to autosize
+		Real64 NomSupAirVolFlowDes;		// Autosized supply air flow rate for reproting
+		Real64 NomSupAirVolFlowUser;	// Hard-sized supply air flow rate for reproting
+		Real64 NomSecAirVolFlowDes;		// Autosized secondary air flow rate for reporting
+		Real64 NomSecAirVolFlowUser;	// Hard-sized secondary air flow rate for reporting
+
+		IsAutoSize = false;
+		NomSupAirVolFlowDes = 0.0;
+		NomSupAirVolFlowUser = 0.0;
+		NomSecAirVolFlowDes = 0.0;
+		NomSecAirVolFlowUser = 0.0;
 
 		if ( ExchCond( ExchNum ).NomSupAirVolFlow == AutoSize ) {
-
-			if ( CurZoneEqNum > 0 ) {
-
+			IsAutoSize = true;
+		}
+ 
+		if ( CurZoneEqNum > 0 ) {
+			if ( !IsAutoSize && !ZoneSizingRunDone ) {
+				if ( ExchCond( ExchNum ).NomSupAirVolFlow > 0.0 ) {
+					ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+					"User-Specified Nominal Supply Air Flow Rate [m3/s]", ExchCond( ExchNum ).NomSupAirVolFlow );
+				}
+			} else { // Sizing run done
 				CheckZoneSizing( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name );
-				ExchCond( ExchNum ).NomSupAirVolFlow = max( FinalZoneSizing( CurZoneEqNum ).DesCoolVolFlow, FinalZoneSizing( CurZoneEqNum ).DesHeatVolFlow );
-
+				NomSupAirVolFlowDes = std::max( FinalZoneSizing( CurZoneEqNum ).DesCoolVolFlow, FinalZoneSizing( CurZoneEqNum ).DesHeatVolFlow );
 			}
+		}
 
-			if ( CurSysNum > 0 ) {
-
+		if ( CurSysNum > 0 ) {
+			if ( !IsAutoSize && !SysSizingRunDone ) {
+				if ( ExchCond( ExchNum ).NomSupAirVolFlow > 0.0 ) {
+					ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+					"User-Specified Nominal Supply Air Flow Rate [m3/s]", ExchCond( ExchNum ).NomSupAirVolFlow );
+				}
+			} else { // Sizing run done
+ 
 				CheckSysSizing( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name );
 
 				if ( CurOASysNum > 0 ) {
 					// size to outdoor air volume flow rate if available
 					if ( FinalSysSizing( CurSysNum ).DesOutAirVolFlow > 0.0 ) {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesOutAirVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesOutAirVolFlow;
 					} else {
 						// ELSE size to supply air duct flow rate
 						{ auto const SELECT_CASE_var( CurDuctType );
 						if ( SELECT_CASE_var == Main ) {
-							ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+							NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 						} else if ( SELECT_CASE_var == Cooling ) {
-							ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesCoolVolFlow;
+							NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesCoolVolFlow;
 						} else if ( SELECT_CASE_var == Heating ) {
-							ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesHeatVolFlow;
+							NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesHeatVolFlow;
 						} else if ( SELECT_CASE_var == Other ) {
-							ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+							NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 						} else {
-							ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+							NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 						}}
 					}
 				} else {
 					{ auto const SELECT_CASE_var( CurDuctType );
 					if ( SELECT_CASE_var == Main ) {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 					} else if ( SELECT_CASE_var == Cooling ) {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesCoolVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesCoolVolFlow;
 					} else if ( SELECT_CASE_var == Heating ) {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesHeatVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesHeatVolFlow;
 					} else if ( SELECT_CASE_var == Other ) {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 					} else {
-						ExchCond( ExchNum ).NomSupAirVolFlow = FinalSysSizing( CurSysNum ).DesMainVolFlow;
+						NomSupAirVolFlowDes = FinalSysSizing( CurSysNum ).DesMainVolFlow;
 					}}
 				}
 
 			}
+		}
 
-			if ( ExchCond( ExchNum ).NomSupAirVolFlow < SmallAirVolFlow ) {
-				ExchCond( ExchNum ).NomSupAirVolFlow = 0.0;
-				// Generic HX will be turned off if nominal air flow rate is 0, even if simulated air flow through
+		if ( IsAutoSize ) {
+			ExchCond( ExchNum ).NomSupAirVolFlow = NomSupAirVolFlowDes;
+			ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+				"Design Size Nominal Supply Air Flow Rate [m3/s]", NomSupAirVolFlowDes );
+			if ( NomSupAirVolFlowDes < SmallAirVolFlow ) {
+				NomSupAirVolFlowDes = 0.0;
+ 				// Generic HX will be turned off if nominal air flow rate is 0, even if simulated air flow through
 				// HX is greater than 0. Avoids a divide by 0 in Sub CalcAirToAirGenericHeatExch.
 				if ( ExchCond( ExchNum ).ExchTypeNum == HX_AIRTOAIR_GENERIC ) {
 					ShowWarningError( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ) + ": \"" + ExchCond( ExchNum ).Name + "\"" );
@@ -1439,11 +1467,58 @@ namespace HeatRecovery {
 					ShowContinueError( "... To eliminate this warning, check sizing and HX inputs to correct HX sizing issue." );
 				}
 			}
-
-			ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name, "Nominal Supply Air Flow Rate [m3/s]", ExchCond( ExchNum ).NomSupAirVolFlow );
-
+		} else {
+			if ( ExchCond( ExchNum ).NomSupAirVolFlow > 0.0 && NomSupAirVolFlowDes > 0.0 ) {
+				NomSupAirVolFlowUser = ExchCond( ExchNum ).NomSupAirVolFlow;
+				ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+					"Design Size Nominal Supply Air Flow Rate [m3/s]", NomSupAirVolFlowDes,
+					"User-Specified Nominal Supply Air Flow Rate [m3/s]", NomSupAirVolFlowUser );
+				if ( DisplayExtraWarnings ) {
+					if ( ( std::abs( NomSupAirVolFlowDes - NomSupAirVolFlowUser ) / NomSupAirVolFlowUser ) > AutoVsHardSizingThreshold ) {
+						ShowMessage( "Size:" + cHXTypes( ExchCond( ExchNum ).ExchTypeNum ) + ":Potential issue with equipment sizing for " +
+							ExchCond( ExchNum ).Name );
+						ShowContinueError( "User-Specified Nominal Supply Air Flow Rate of " + 
+							RoundSigDigits( NomSupAirVolFlowUser, 5 ) + " [m3/s]" );
+						ShowContinueError( "differs from Design Size Nominal Supply Air Flow Rate of " +
+							RoundSigDigits( NomSupAirVolFlowDes, 5 ) + " [m3/s]" );
+						ShowContinueError( "This may, or may not, indicate mismatched component sizes." );
+						ShowContinueError( "Verify that the value entered is intended and is consistent with other components." );
+					}
+				}
+			}
 		}
 
+		if ( ExchCond( ExchNum ).ExchTypeNum == HX_AIRTOAIR_FLATPLATE ) {
+			IsAutoSize = false;
+
+			if ( ExchCond( ExchNum ).NomSecAirVolFlow == AutoSize ) {
+				IsAutoSize = true;
+			}
+			NomSecAirVolFlowDes = ExchCond( ExchNum ).NomSupAirVolFlow;
+ 
+			if ( IsAutoSize) {
+				ExchCond( ExchNum ).NomSecAirVolFlow = NomSecAirVolFlowDes;
+				ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+					"Design Size Nominal Secondary Air Flow Rate [m3/s]", NomSecAirVolFlowDes );
+			} else {
+				if ( ExchCond( ExchNum ).NomSecAirVolFlow > 0.0 && NomSecAirVolFlowDes > 0.0 ) {
+					NomSecAirVolFlowUser = ExchCond( ExchNum ).NomSecAirVolFlow;
+					ReportSizingOutput( cHXTypes( ExchCond( ExchNum ).ExchTypeNum ), ExchCond( ExchNum ).Name,
+						"Design Size Nominal Secondary Air Flow Rate [m3/s]", NomSecAirVolFlowDes,
+						"User-Specified Nominal Secondary Air Flow Rate [m3/s]", NomSecAirVolFlowUser );
+					if ( DisplayExtraWarnings ) {
+						if ( ( std::abs( NomSecAirVolFlowDes - NomSecAirVolFlowUser ) / NomSecAirVolFlowUser ) > AutoVsHardSizingThreshold ) {
+							ShowMessage( "Size:" + cHXTypes( ExchCond( ExchNum ).ExchTypeNum ) + ":Potential issue with equipment sizing for " +
+								ExchCond( ExchNum ).Name );
+							ShowContinueError( "User-Specified Nominal Secondary Air Flow Rate of " + RoundSigDigits( NomSecAirVolFlowUser, 5 ) + " [m3/s]" );
+							ShowContinueError( "differs from Design Size Nominal Secondary Air Flow Rate of " + RoundSigDigits( NomSecAirVolFlowDes, 5 ) + " [m3/s]" );
+							ShowContinueError( "This may, or may not, indicate mismatched component sizes." );
+							ShowContinueError( "Verify that the value entered is intended and is consistent with other components." );
+						}
+					}
+				}
+			}
+		}
 	}
 
 	void
@@ -1666,8 +1741,10 @@ namespace HeatRecovery {
 		int const ExNum, // number of the current heat exchanger being simulated
 		bool const HXUnitOn, // flag to simulate heat exchanger heat recovery
 		bool const FirstHVACIteration, // first HVAC iteration flag
+		int const FanOpMode, // Supply air fan operating mode (1=cycling, 2=constant)
 		Optional_bool_const EconomizerFlag, // economizer flag pass by air loop or OA sys
-		Optional_bool_const HighHumCtrlFlag // high humidity control flag passed by airloop or OA sys
+		Optional_bool_const HighHumCtrlFlag, // high humidity control flag passed by airloop or OA sys
+		Optional < Real64 const > HXPartLoadRatio // 
 	)
 	{
 
@@ -1698,7 +1775,7 @@ namespace HeatRecovery {
 		//   School Advanced Ventilation Engineering Software http://www.epa.gov/iaq/schooldesign/saves.html
 
 		// USE STATEMENTS:
-		// na
+		using DataHVACGlobals::CycFanCycCoil;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -1748,6 +1825,7 @@ namespace HeatRecovery {
 		Real64 TotHeatRecRate; // total heat recovery rate to supply air (heating +, cooling -)
 		bool EconomizerActiveFlag; // local representing the economizer status when PRESENT
 		bool HighHumCtrlActiveFlag; // local representing high humidity control when PRESENT
+		Real64 AirSidePLR;
 
 		// Initialize local variables
 		UnitOn = true;
@@ -1805,6 +1883,25 @@ namespace HeatRecovery {
 
 		if ( UnitOn ) {
 			// Unit is on.
+			if( present( HXPartLoadRatio ) && FanOpMode == DataHVACGlobals::CycFanCycCoil ) {
+				if( HXPartLoadRatio > 0 ) {
+					AirSidePLR = HXPartLoadRatio;
+				} else {
+					AirSidePLR = 1.0;
+				}
+			} else {
+				AirSidePLR = 1.0;
+			}
+
+			if( FanOpMode == DataHVACGlobals::CycFanCycCoil ) {
+				ExchCond( ExNum ).SupInMassFlow /= AirSidePLR;
+				ExchCond( ExNum ).SupOutMassFlow /= AirSidePLR;
+				ExchCond( ExNum ).SecInMassFlow /= AirSidePLR;
+				ExchCond( ExNum ).SecOutMassFlow /= AirSidePLR;
+				ExchCond( ExNum ).SupBypassMassFlow /= AirSidePLR;
+				ExchCond( ExNum ).SecBypassMassFlow /= AirSidePLR;
+			}
+
 			// In the future, use actual node pressures in the following air density calls
 			RhoStd = PsyRhoAirFnPbTdbW( OutBaroPress, 20.0, 0.0 );
 			HXSupAirVolFlowRate = ExchCond( ExNum ).SupOutMassFlow / RhoStd; // volume flow using standard density
@@ -1891,10 +1988,17 @@ namespace HeatRecovery {
 			//   Control the supply air outlet temperature to a setpoint for Heating Mode only
 			//   (ControlFraction = 0 HX fully bypassed, ControlFraction = 1 air passed entirely through HX)
 			//   (supply air stream bypass mass flow rate proportional to ControlFraction except when frost control is active)
-			if ( ExchCond( ExNum ).ControlToTemperatureSetPoint && ExchCond( ExNum ).SupInTemp < HXTempSetPoint ) {
-				//     IF secondary inlet temperature is above the supply inlet temperature, control to SP
-				if ( ExchCond( ExNum ).SecInTemp > ExchCond( ExNum ).SupInTemp && ( ExchCond( ExNum ).SupInTemp - ExchCond( ExNum ).SupOutTemp ) != 0.0 ) {
-					ControlFraction = max( 0.0, min( 1.0, ( ExchCond( ExNum ).SupInTemp - HXTempSetPoint ) / ( ExchCond( ExNum ).SupInTemp - ExchCond( ExNum ).SupOutTemp ) ) );
+			if ( ExchCond( ExNum ).ControlToTemperatureSetPoint ) {
+				if ( ( ExchCond( ExNum ).SupInTemp - ExchCond( ExNum ).SupOutTemp ) != 0.0 ) {
+					if ( ( ExchCond( ExNum ).SupInTemp < HXTempSetPoint && ExchCond( ExNum ).SupOutTemp > HXTempSetPoint ) ||
+						( ExchCond( ExNum ).SupInTemp > HXTempSetPoint && ExchCond( ExNum ).SupOutTemp < HXTempSetPoint ) ) {
+						ControlFraction = max( 0.0, min( 1.0, std::abs( ( ExchCond( ExNum ).SupInTemp - HXTempSetPoint ) / ( ExchCond( ExNum ).SupInTemp - ExchCond( ExNum ).SupOutTemp ) ) ) );
+					} else if ( ( ExchCond( ExNum ).SupInTemp < ExchCond( ExNum ).SupOutTemp && ExchCond( ExNum ).SupOutTemp < HXTempSetPoint ) ||
+								( ExchCond( ExNum ).SupInTemp > ExchCond( ExNum ).SupOutTemp && ExchCond( ExNum ).SupOutTemp > HXTempSetPoint ) ) {
+						ControlFraction = 1.0;
+					} else {
+						ControlFraction = 0.0;
+					}
 				} else {
 					//     ELSE fully bypass HX to maintain supply outlet temp as high as possible
 					ControlFraction = 0.0;
@@ -1941,7 +2045,7 @@ namespace HeatRecovery {
 						Error = ( TempSupOut - HXTempSetPoint );
 						//         IF supply inlet temp = supply outlet temp, fully bypass HX - ELSE control to SP
 						if ( TempSupIn != TempSupOut ) {
-							ControlFraction = max( 0.0, min( 1.0, ControlFraction * ( TempSupIn - HXTempSetPoint ) / ( TempSupIn - TempSupOut ) ) );
+							ControlFraction = max( 0.0, min( 1.0, std::abs( ControlFraction * ( TempSupIn - HXTempSetPoint ) / ( TempSupIn - TempSupOut ) ) ) );
 						} else if ( std::abs( TempSupOut - HXTempSetPoint ) < ErrorTol ) {
 							//           IF TempSupIn = TempSupOut then TempSecIn = TempSupIn (ControlFraction = ?)
 							//           Do nothing, variables in ELSE below have already been calculated
@@ -1986,7 +2090,23 @@ namespace HeatRecovery {
 
 			} //ENDIF for "IF(ExchCond(ExNum)%ControlToTemperatureSetPoint .AND... THEN, ELSE"
 
-			if ( ( ExchCond( ExNum ).FrostControlType == "MINIMUMEXHAUSTTEMPERATURE" && ExchCond( ExNum ).SecOutTemp < ExchCond( ExNum ).ThresholdTemperature ) || ( ExchCond( ExNum ).FrostControlType == "EXHAUSTAIRRECIRCULATION" && ExchCond( ExNum ).SupInTemp <= ExchCond( ExNum ).ThresholdTemperature ) || ( ExchCond( ExNum ).FrostControlType == "EXHAUSTONLY" && ExchCond( ExNum ).SupInTemp <= ExchCond( ExNum ).ThresholdTemperature ) ) {
+			if( FanOpMode == DataHVACGlobals::CycFanCycCoil ) {
+				ExchCond( ExNum ).SupInMassFlow *= AirSidePLR;
+				ExchCond( ExNum ).SupOutMassFlow *= AirSidePLR;
+				ExchCond( ExNum ).SecInMassFlow *= AirSidePLR;
+				ExchCond( ExNum ).SecOutMassFlow *= AirSidePLR;
+				ExchCond( ExNum ).SupBypassMassFlow *= AirSidePLR;
+				ExchCond( ExNum ).SecBypassMassFlow *= AirSidePLR;
+			} else if( FanOpMode == DataHVACGlobals::ContFanCycCoil ) {
+				ExchCond( ExNum ).SupOutTemp = ExchCond( ExNum ).SupOutTemp * AirSidePLR + ExchCond( ExNum ).SupInTemp * ( 1.0 - AirSidePLR );
+				ExchCond( ExNum ).SupOutHumRat = ExchCond( ExNum ).SupOutHumRat * AirSidePLR + ExchCond( ExNum ).SupInHumRat * ( 1.0 - AirSidePLR );
+				ExchCond( ExNum ).SupOutEnth = ExchCond( ExNum ).SupOutEnth * AirSidePLR + ExchCond( ExNum ).SupOutEnth * ( 1.0 - AirSidePLR );
+				ExchCond( ExNum ).SecOutTemp = ExchCond( ExNum ).SecOutTemp * AirSidePLR + ExchCond( ExNum ).SecInTemp * ( 1.0 - AirSidePLR );
+				ExchCond( ExNum ).SecOutHumRat = ExchCond( ExNum ).SecOutHumRat * AirSidePLR + ExchCond( ExNum ).SecInHumRat * ( 1.0 - AirSidePLR );
+				ExchCond( ExNum ).SecOutEnth = ExchCond( ExNum ).SecOutEnth * AirSidePLR + ExchCond( ExNum ).SecOutEnth * ( 1.0 - AirSidePLR );
+			}
+
+			if( ( ExchCond( ExNum ).FrostControlType == "MINIMUMEXHAUSTTEMPERATURE" && ExchCond( ExNum ).SecOutTemp < ExchCond( ExNum ).ThresholdTemperature ) || ( ExchCond( ExNum ).FrostControlType == "EXHAUSTAIRRECIRCULATION" && ExchCond( ExNum ).SupInTemp <= ExchCond( ExNum ).ThresholdTemperature ) || ( ExchCond( ExNum ).FrostControlType == "EXHAUSTONLY" && ExchCond( ExNum ).SupInTemp <= ExchCond( ExNum ).ThresholdTemperature ) ) {
 				FrostControl( ExNum );
 				FrostControlFlag = true;
 			}
@@ -2089,7 +2209,6 @@ namespace HeatRecovery {
 		// SUBROUTINE ARGUMENT DEFINITIONS:
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
-		Real64 const ErrorTol( 0.001 ); // error tolerence
 
 		// INTERFACE BLOCK SPECIFICATIONS:
 		// na
@@ -2120,8 +2239,8 @@ namespace HeatRecovery {
 		Real64 Coeff7; // coefficient7 to empirical model (used for both temperature and humidity ratio equations)
 		Real64 Coeff8; // coefficient8 to empirical model (used for both temperature and humidity ratio equations)
 		Real64 BalFaceVelActual; // operating face velocity [m/s]
-		Real64 FullLoadSupOutTemp; // empirical model supply outlet temperature [C]
-		Real64 FullLoadSupOutHumRat; // empirical model supply outlet humidity ratio [kg/kg]
+		Real64 FullLoadSupOutTemp( 0 ); // empirical model supply outlet temperature [C]
+		Real64 FullLoadSupOutHumRat( 0 ); // empirical model supply outlet humidity ratio [kg/kg]
 		Real64 FullLoadDeltaT; // empirical model heat exchanger delta temperature [C]
 		Real64 FullLoadDeltaW; // empirical model heat exchanger delta humidity ratio [kg/kg]
 		Real64 T_RegenInTemp; // empirical model supply (regen) inlet temperature for temperature equation [C]
@@ -3093,7 +3212,7 @@ namespace HeatRecovery {
 		int SolFla; // Flag of solver
 		static Real64 NTU0( 0.0 ); // lower bound for NTU
 		static Real64 NTU1( 50.0 ); // upper bound for NTU
-		FArray1D< Real64 > Par( 2 );
+		Array1D< Real64 > Par( 2 );
 
 		Par( 1 ) = Eps;
 		Par( 2 ) = Z;
@@ -3112,7 +3231,7 @@ namespace HeatRecovery {
 	Real64
 	GetResidCrossFlowBothUnmixed(
 		Real64 const NTU, // number of transfer units
-		FArray1< Real64 > const & Par // par(1) = Eps, par(2) = Z
+		Array1< Real64 > const & Par // par(1) = Eps, par(2) = Z
 	)
 	{
 
@@ -4483,7 +4602,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetSupplyInletNode = ExchCond( WhichHX ).SupInletNode;
 		} else {
@@ -4546,7 +4665,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetSupplyOutletNode = ExchCond( WhichHX ).SupOutletNode;
 		} else {
@@ -4609,7 +4728,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetSecondaryInletNode = ExchCond( WhichHX ).SecInletNode;
 		} else {
@@ -4672,7 +4791,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetSecondaryOutletNode = ExchCond( WhichHX ).SecOutletNode;
 		} else {
@@ -4735,7 +4854,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetSupplyAirFlowRate = ExchCond( WhichHX ).NomSupAirVolFlow;
 		} else {
@@ -4799,7 +4918,7 @@ namespace HeatRecovery {
 			GetInputFlag = false;
 		}
 
-		WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+		WhichHX = FindItemInList( HXName, ExchCond );
 		if ( WhichHX != 0 ) {
 			GetHeatExchangerObjectTypeNum = ExchCond( WhichHX ).ExchTypeNum;
 		} else {
@@ -4865,7 +4984,7 @@ namespace HeatRecovery {
 		}
 
 		if ( HXNum == 0 ) {
-			WhichHX = FindItemInList( HXName, ExchCond.Name(), NumHeatExchangers );
+			WhichHX = FindItemInList( HXName, ExchCond );
 		} else {
 			WhichHX = HXNum;
 		}
@@ -4888,7 +5007,7 @@ namespace HeatRecovery {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

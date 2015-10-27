@@ -2,7 +2,7 @@
 #include <cmath>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
+#include <ObjexxFCL/Array.functions.hh>
 #include <ObjexxFCL/gio.hh>
 #include <ObjexxFCL/string.functions.hh>
 
@@ -77,7 +77,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 	// Output Variables Type definition
 
 	// MODULE VARIABLE DECLARATIONS:
-	FArray1D_bool CheckEquipName;
+	Array1D_bool CheckEquipName;
 
 	std::string GSHPRefrigerant( "R22" ); // refrigerent name and index
 	int GSHPRefrigIndex( 0 );
@@ -98,8 +98,8 @@ namespace HeatPumpWaterToWaterCOOLING {
 	// Name Public routines, optionally name Private routines within this module
 
 	// Object Data
-	FArray1D< GshpSpecs > GSHP; // dimension to number of machines
-	FArray1D< ReportVars > GSHPReport;
+	Array1D< GshpSpecs > GSHP; // dimension to number of machines
+	Array1D< ReportVars > GSHPReport;
 
 	// MODULE SUBROUTINES:
 
@@ -165,7 +165,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 
 		// Find the correct Equipment
 		if ( CompIndex == 0 ) {
-			GSHPNum = FindItemInList( GSHPName, GSHP.Name(), NumGSHPs );
+			GSHPNum = FindItemInList( GSHPName, GSHP );
 			if ( GSHPNum == 0 ) {
 				ShowFatalError( "SimHPWatertoWaterCOOLING: Unit not found=" + GSHPName );
 			}
@@ -252,8 +252,8 @@ namespace HeatPumpWaterToWaterCOOLING {
 		int NumAlphas; // Number of elements in the alpha array
 		int NumNums; // Number of elements in the numeric array
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string AlphArray( 5 ); // character string data
-		FArray1D< Real64 > NumArray( 23 ); // numeric data
+		Array1D_string AlphArray( 5 ); // character string data
+		Array1D< Real64 > NumArray( 23 ); // numeric data
 
 		static bool ErrorsFound( false );
 		bool IsNotOK; // Flag to verify name
@@ -276,7 +276,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 			GetObjectItem( ModuleCompNameUC, GSHPNum, AlphArray, NumAlphas, NumArray, NumNums, IOStat );
 			IsNotOK = false;
 			IsBlank = true;
-			VerifyName( AlphArray( 1 ), GSHP.Name(), GSHPNum - 1, IsNotOK, IsBlank, "GHSP Name" );
+			VerifyName( AlphArray( 1 ), GSHP, GSHPNum - 1, IsNotOK, IsBlank, "GHSP Name" );
 
 			if ( IsNotOK ) {
 				ErrorsFound = true;
@@ -434,6 +434,10 @@ namespace HeatPumpWaterToWaterCOOLING {
 			ScanPlantLoopsForObject( GSHP( GSHPNum ).Name, GSHP( GSHPNum ).WWHPPlantTypeOfNum, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).SourceLoopSideNum, GSHP( GSHPNum ).SourceBranchNum, GSHP( GSHPNum ).SourceCompNum, _, _, _, GSHP( GSHPNum ).SourceSideInletNodeNum, _, errFlag );
 			ScanPlantLoopsForObject( GSHP( GSHPNum ).Name, GSHP( GSHPNum ).WWHPPlantTypeOfNum, GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum, _, _, _, GSHP( GSHPNum ).LoadSideInletNodeNum, _, errFlag );
 
+			if ( ! errFlag ) {
+				PlantUtilities::InterConnectTwoPlantLoopSides( GSHP( GSHPNum ).LoadLoopNum,  GSHP( GSHPNum ).LoadLoopSideNum,  GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).SourceLoopSideNum, GSHP( GSHPNum ).WWHPPlantTypeOfNum, true );
+			}
+
 			if ( errFlag ) {
 				ShowFatalError( "GetWatertoWaterHPInput: Program terminated on scan for loop data" );
 			}
@@ -473,8 +477,8 @@ namespace HeatPumpWaterToWaterCOOLING {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		static FArray1D_bool MyEnvrnFlag;
-		static FArray1D_bool MyPlanScanFlag;
+		static Array1D_bool MyEnvrnFlag;
+		static Array1D_bool MyPlanScanFlag;
 		static bool MyOneTimeFlag( true );
 		Real64 rho; // local fluid density
 		bool errFlag;
@@ -548,11 +552,11 @@ namespace HeatPumpWaterToWaterCOOLING {
 
 	void
 	CalcGshpModel(
-		std::string const & GSHPType, // type ofGSHP
+		std::string const & EP_UNUSED( GSHPType ), // type ofGSHP
 		std::string const & GSHPName, // user specified name ofGSHP
 		int const GSHPNum, // GSHP Number
 		Real64 & MyLoad, // Operating Load
-		bool const FirstHVACIteration
+		bool const EP_UNUSED( FirstHVACIteration )
 	)
 	{
 		// SUBROUTINE INFORMATION:
@@ -569,9 +573,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 		// REFERENCES:
 
 		// Using/Aliasing
-		using DataHVACGlobals::TimeStepSys;
 		using DataHVACGlobals::SysTimeElapsed;
-		using DataHVACGlobals::FirstTimeStepSysFlag;
 		using namespace FluidProperties;
 		using General::TrimSigDigits;
 		using DataPlant::PlantLoop;
@@ -700,6 +702,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 			SetComponentFlowRate( LoadSideWaterMassFlowRate, LoadSideInletNode, LoadSideOutletNode, GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum );
 			SourceSideWaterMassFlowRate = 0.0;
 			SetComponentFlowRate( SourceSideWaterMassFlowRate, SourceSideInletNode, SourceSideOutletNode, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).SourceLoopSideNum, GSHP( GSHPNum ).SourceBranchNum, GSHP( GSHPNum ).SourceCompNum );
+			PlantUtilities::PullCompInterconnectTrigger( GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum , GSHP( GSHPNum ).CondMassFlowIndex, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, DataPlant::CriteriaType_MassFlowRate, SourceSideWaterMassFlowRate  );
 			//now initialize simulation variables for "heat pump off"
 			QLoad = 0.0;
 			QSource = 0.0;
@@ -726,6 +729,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 				SetComponentFlowRate( LoadSideWaterMassFlowRate, LoadSideInletNode, LoadSideOutletNode, GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum );
 				SourceSideWaterMassFlowRate = 0.0;
 				SetComponentFlowRate( SourceSideWaterMassFlowRate, SourceSideInletNode, SourceSideOutletNode, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).SourceLoopSideNum, GSHP( GSHPNum ).SourceBranchNum, GSHP( GSHPNum ).SourceCompNum );
+				PlantUtilities::PullCompInterconnectTrigger( GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum , GSHP( GSHPNum ).CondMassFlowIndex, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, DataPlant::CriteriaType_MassFlowRate, SourceSideWaterMassFlowRate  );
 				QLoad = 0.0;
 				QSource = 0.0;
 				Power = 0.0;
@@ -735,6 +739,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 				SourceSideWaterOutletTemp = SourceSideWaterInletTemp;
 				return;
 			}
+			PlantUtilities::PullCompInterconnectTrigger( GSHP( GSHPNum ).LoadLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, GSHP( GSHPNum ).LoadBranchNum, GSHP( GSHPNum ).LoadCompNum , GSHP( GSHPNum ).CondMassFlowIndex, GSHP( GSHPNum ).SourceLoopNum, GSHP( GSHPNum ).LoadLoopSideNum, DataPlant::CriteriaType_MassFlowRate, SourceSideWaterMassFlowRate  );
 		}
 
 		//**********BEGIN THE CALCULATION**************
@@ -754,7 +759,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 		SourceSideEffect = 1.0 - std::exp( -SourceSideUA / ( CpSourceSide * SourceSideWaterMassFlowRate ) );
 
 		// main iteration loop to solve model equations
-		LOOPSourceEnth: while ( true ) {
+		while ( true ) {
 			++IterationCount;
 
 			// To determine Load Side temperature
@@ -826,7 +831,7 @@ namespace HeatPumpWaterToWaterCOOLING {
 			//            Shoot into the super heated region
 			T111 = CompSuctionSatTemp + 100.0;
 			// Iterate to find the Suction State
-			LOOP: while ( true ) {
+			while ( true ) {
 				CompSuctionTemp = 0.5 * ( T110 + T111 );
 
 				CompSuctionEnth = GetSupHeatEnthalpyRefrig( GSHPRefrigerant, CompSuctionTemp, SuctionPr, GSHPRefrigIndex, RoutineNameCompSuctionTemp );
@@ -840,7 +845,6 @@ namespace HeatPumpWaterToWaterCOOLING {
 				} else {
 					T111 = CompSuctionTemp;
 				}
-				LOOP_loop: ;
 			}
 			LOOP_exit: ;
 
@@ -887,7 +891,6 @@ namespace HeatPumpWaterToWaterCOOLING {
 
 			}
 
-			LOOPSourceEnth_loop: ;
 		}
 		LOOPSourceEnth_exit: ;
 

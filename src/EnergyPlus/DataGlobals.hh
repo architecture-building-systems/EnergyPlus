@@ -31,6 +31,9 @@ namespace DataGlobals {
 	extern int const ksDesignDay;
 	extern int const ksRunPeriodDesign;
 	extern int const ksRunPeriodWeather;
+	extern int const ksHVACSizeDesignDay; // a regular design day run during HVAC Sizing Simulation
+	extern int const ksHVACSizeRunPeriodDesign; // a weather period design day run during HVAC Sizing Simulation
+	extern int const ksReadAllWeatherData; // a weather period for reading all weather data proir to the simulation
 
 	extern int const ZoneTSReporting; // value for Zone Time Step Reporting (UpdateDataAndReport)
 	extern int const HVACTSReporting; // value for HVAC Time Step Reporting (UpdateDataAndReport)
@@ -112,6 +115,8 @@ namespace DataGlobals {
 	extern bool WarmupFlag; // True during the warmup portion of a simulation
 	extern int OutputFileStandard; // Unit number for the standard output file (hourly data only)
 	extern std::ostream * eso_stream; // Internal stream used for eso output (used for performance)
+	extern int OutputStandardError; // Unit number for the standard error output file
+	extern std::ostream * err_stream; // Internal stream used for err output (used for performance)
 	extern int StdOutputRecordCount; // Count of Standard output records
 	extern int OutputFileInits; // Unit number for the standard Initialization output file
 	extern int OutputFileDebug; // Unit number for debug outputs
@@ -128,10 +133,13 @@ namespace DataGlobals {
 	extern bool DoPlantSizing; // User input in SimulationControl object
 	extern bool DoDesDaySim; // User input in SimulationControl object
 	extern bool DoWeathSim; // User input in SimulationControl object
+	extern bool DoHVACSizingSimulation; //User input in SimulationControl object
+	extern int HVACSizingSimMaxIterations; //User input in SimulationControl object
 	extern bool WeathSimReq; // Input has a RunPeriod request
 	extern int KindOfSim; // See parameters. (ksDesignDay, ksRunPeriodDesign, ksRunPeriodWeather)
 	extern bool DoOutputReporting; // TRUE if variables to be written out
 	extern bool DoingSizing; // TRUE when "sizing" is being performed (some error messages won't be displayed)
+	extern bool DoingHVACSizingSimulations; // true when HVAC Sizing Simulations are being performed.
 	extern bool DoingInputProcessing; // TRUE when "IP" is being performed (some error messages are cached)
 	extern bool DisplayAllWarnings; // True when selection for  "DisplayAllWarnings" is entered (turns on other warning flags)
 	extern bool DisplayExtraWarnings; // True when selection for  "DisplayExtraWarnings" is entered
@@ -148,6 +156,8 @@ namespace DataGlobals {
 	extern bool MetersHaveBeenInitialized;
 	extern bool KickOffSimulation; // Kick off simulation -- meaning run each environment for 1 or 2 time steps.
 	extern bool KickOffSizing; // Kick off sizing -- meaning run each environment for 1 or 2 time steps.
+	extern bool RedoSizesHVACSimulation; // doing kick off simulation for redoing sizes as part of sizing
+	extern bool FinalSizingHVACSizingSimIteration; // true if this will be no more HVAC sizing sim iterations
 	extern bool AnyEnergyManagementSystemInModel; // true if there is any EMS or Erl in model.  otherwise false
 	extern bool AnyPlantInModel; // true if there are any plant or condenser loops in model, otherwise false
 	extern int CacheIPErrorFile; // Cache IP errors until IDF processing done.
@@ -164,6 +174,11 @@ namespace DataGlobals {
 	extern int Progress;
 	extern void ( *fProgressPtr )( int const );
 	extern void ( *fMessagePtr )( std::string const & );
+
+	// Clears the global data in DataGlobals.
+	// Needed for unit tests, should not be normally called.
+	void
+	clear_state();
 
 } // DataGlobals
 

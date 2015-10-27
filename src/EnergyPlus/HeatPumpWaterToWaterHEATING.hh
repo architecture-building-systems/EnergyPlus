@@ -2,7 +2,7 @@
 #define HeatPumpWaterToWaterHEATING_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1D.hh>
+#include <ObjexxFCL/Array1D.hh>
 
 // EnergyPlus Headers
 #include <EnergyPlus.hh>
@@ -40,7 +40,7 @@ namespace HeatPumpWaterToWaterHEATING {
 	extern Real64 SourceSideWaterInletTemp; // Source Side outlet temperature °C
 	extern Real64 LoadSideWaterOutletTemp; // Source Side outlet temperature °C
 	extern Real64 LoadSideWaterInletTemp; // Source Side outlet temperature °C
-	extern FArray1D_bool CheckEquipName;
+	extern Array1D_bool CheckEquipName;
 
 	// SUBROUTINE SPECIFICATIONS FOR MODULE
 
@@ -92,6 +92,7 @@ namespace HeatPumpWaterToWaterHEATING {
 		int LoadLoopSideNum; // load side plant loop side index
 		int LoadBranchNum; // load side plant loop branch index
 		int LoadCompNum; // load side plant loop component index
+		int CondMassFlowIndex; // index for criteria in PullCompInterconnectTrigger
 
 		// Default Constructor
 		GshpSpecs() :
@@ -130,7 +131,8 @@ namespace HeatPumpWaterToWaterHEATING {
 			LoadLoopNum( 0 ),
 			LoadLoopSideNum( 0 ),
 			LoadBranchNum( 0 ),
-			LoadCompNum( 0 )
+			LoadCompNum( 0 ),
+			CondMassFlowIndex( 0 )
 		{}
 
 		// Member Constructor
@@ -171,7 +173,8 @@ namespace HeatPumpWaterToWaterHEATING {
 			int const LoadLoopNum, // load side plant loop index number
 			int const LoadLoopSideNum, // load side plant loop side index
 			int const LoadBranchNum, // load side plant loop branch index
-			int const LoadCompNum // load side plant loop component index
+			int const LoadCompNum ,// load side plant loop component index
+			int const CondMassFlowIndex 
 		) :
 			Name( Name ),
 			WWHPPlantTypeOfNum( WWHPPlantTypeOfNum ),
@@ -209,7 +212,8 @@ namespace HeatPumpWaterToWaterHEATING {
 			LoadLoopNum( LoadLoopNum ),
 			LoadLoopSideNum( LoadLoopSideNum ),
 			LoadBranchNum( LoadBranchNum ),
-			LoadCompNum( LoadCompNum )
+			LoadCompNum( LoadCompNum ),
+			CondMassFlowIndex( CondMassFlowIndex )
 		{}
 
 	};
@@ -282,8 +286,8 @@ namespace HeatPumpWaterToWaterHEATING {
 	};
 
 	// Object Data
-	extern FArray1D< GshpSpecs > GSHP; // dimension to number of machines
-	extern FArray1D< ReportVars > GSHPReport;
+	extern Array1D< GshpSpecs > GSHP; // dimension to number of machines
+	extern Array1D< ReportVars > GSHPReport;
 
 	// Functions
 

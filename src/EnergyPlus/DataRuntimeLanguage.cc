@@ -139,7 +139,7 @@ namespace DataRuntimeLanguage {
 	// INTERFACE BLOCK SPECIFICATIONS: na
 
 	// MODULE VARIABLE DECLARATIONS:
-	FArray1D_int EMSProgram;
+	Array1D_int EMSProgram;
 
 	int NumProgramCallManagers( 0 ); // count of Erl program managers with calling points
 	int NumSensors( 0 ); // count of EMS sensors used in model (data from output variables)
@@ -185,21 +185,21 @@ namespace DataRuntimeLanguage {
 	bool OutputEMSInternalVarsFull( false ); // how much to write out to EDD file, if true dump full combinatorial internal list
 	bool OutputEMSInternalVarsSmall( false ); // how much to write out to EDD file, if true dump internal list without key names
 
-	FArray2D_bool EMSConstructActuatorChecked;
-	FArray2D_bool EMSConstructActuatorIsOkay;
+	Array2D_bool EMSConstructActuatorChecked;
+	Array2D_bool EMSConstructActuatorIsOkay;
 
 	// Object Data
-	FArray1D< ErlVariableType > ErlVariable; // holds Erl variables in a structure array
-	FArray1D< ErlStackType > ErlStack; // holds Erl programs in separate "stacks"
-	FArray1D< ErlExpressionType > ErlExpression; // holds Erl expressions in structure array
-	FArray1D< OperatorType > PossibleOperators; // hard library of available operators and functions
-	FArray1D< TrendVariableType > TrendVariable; // holds Erl trend varialbes in a structure array
-	FArray1D< OutputVarSensorType > Sensor; // EMS:SENSOR objects used (from output variables)
-	FArray1D< EMSActuatorAvailableType > EMSActuatorAvailable; // actuators that could be used
-	FArray1D< ActuatorUsedType > EMSActuatorUsed; // actuators that are used
-	FArray1D< InternalVarsAvailableType > EMSInternalVarsAvailable; // internal data that could be used
-	FArray1D< InternalVarsUsedType > EMSInternalVarsUsed; // internal data that are used
-	FArray1D< EMSProgramCallManagementType > EMSProgramCallManager; // program calling managers
+	Array1D< ErlVariableType > ErlVariable; // holds Erl variables in a structure array
+	Array1D< ErlStackType > ErlStack; // holds Erl programs in separate "stacks"
+	Array1D< ErlExpressionType > ErlExpression; // holds Erl expressions in structure array
+	Array1D< OperatorType > PossibleOperators; // hard library of available operators and functions
+	Array1D< TrendVariableType > TrendVariable; // holds Erl trend varialbes in a structure array
+	Array1D< OutputVarSensorType > Sensor; // EMS:SENSOR objects used (from output variables)
+	Array1D< EMSActuatorAvailableType > EMSActuatorAvailable; // actuators that could be used
+	Array1D< ActuatorUsedType > EMSActuatorUsed; // actuators that are used
+	Array1D< InternalVarsAvailableType > EMSInternalVarsAvailable; // internal data that could be used
+	Array1D< InternalVarsUsedType > EMSInternalVarsUsed; // internal data that are used
+	Array1D< EMSProgramCallManagementType > EMSProgramCallManager; // program calling managers
 	ErlValueType Null( 0, 0.0, "", 0, 0, false, 0, "" ); // special "null" Erl variable value instance
 	ErlValueType False( 0, 0.0, "", 0, 0, false, 0, "" ); // special "false" Erl variable value instance
 	ErlValueType True( 0, 0.0, "", 0, 0, false, 0, "" ); // special "True" Erl variable value instance, gets reset
@@ -208,6 +208,60 @@ namespace DataRuntimeLanguage {
 	std::unordered_set< std::tuple< std::string, std::string, std::string >, EMSActuatorKey_hash > EMSActuator_lookup; // Fast duplicate lookup structure
 
 	// Functions
+	void
+	clear_state()
+	{
+		EMSProgram.deallocate();
+		NumProgramCallManagers = 0 ; 
+		NumSensors =  0 ; 
+		numActuatorsUsed = 0 ; 
+		numEMSActuatorsAvailable = 0 ; 
+		maxEMSActuatorsAvailable = 0 ; 
+		NumInternalVariablesUsed = 0 ; 
+		numEMSInternalVarsAvailable = 0 ; 
+		maxEMSInternalVarsAvailable = 0 ; 
+		varsAvailableAllocInc = 1000 ;
+		NumErlPrograms = 0 ;
+		NumErlSubroutines = 0 ;
+		NumUserGlobalVariables = 0 ;
+		NumErlVariables = 0 ;
+		NumErlStacks = 0 ;
+		NumExpressions = 0 ;
+		NumEMSOutputVariables = 0 ;
+		NumEMSMeteredOutputVariables = 0 ; 
+		NumErlTrendVariables = 0 ;
+		NumEMSCurveIndices = 0 ; 
+		NumEMSConstructionIndices = 0 ; 
+		NumExternalInterfaceGlobalVariables = 0 ; 
+		NumExternalInterfaceFunctionalMockupUnitImportGlobalVariables =  0 ; 
+		NumExternalInterfaceFunctionalMockupUnitExportGlobalVariables = 0 ; 
+		NumExternalInterfaceActuatorsUsed = 0 ; 
+		NumExternalInterfaceFunctionalMockupUnitImportActuatorsUsed = 0 ; 
+		NumExternalInterfaceFunctionalMockupUnitExportActuatorsUsed = 0 ; 
+		OutputEMSFileUnitNum = 0 ; 
+		OutputEDDFile = false ; 
+		OutputFullEMSTrace = false ; 
+		OutputEMSErrors = false ; 
+		OutputEMSActuatorAvailFull = false ; 
+		OutputEMSActuatorAvailSmall = false ; 
+		OutputEMSInternalVarsFull = false ; 
+		OutputEMSInternalVarsSmall = false ; 
+		EMSConstructActuatorChecked.deallocate();
+		EMSConstructActuatorIsOkay.deallocate();
+		ErlVariable.deallocate(); // holds Erl variables in a structure array
+		ErlStack.deallocate(); // holds Erl programs in separate "stacks"
+		ErlExpression.deallocate(); // holds Erl expressions in structure array
+		PossibleOperators.deallocate(); // hard library of available operators and functions
+		TrendVariable.deallocate(); // holds Erl trend varialbes in a structure array
+		Sensor.deallocate(); // EMS:SENSOR objects used (from output variables)
+		EMSActuatorAvailable.deallocate(); // actuators that could be used
+		EMSActuatorUsed.deallocate(); // actuators that are used
+		EMSInternalVarsAvailable.deallocate(); // internal data that could be used
+		EMSInternalVarsUsed.deallocate(); // internal data that are used
+		EMSProgramCallManager.deallocate(); // program calling managers
+		EMSActuator_lookup.clear(); // Fast duplicate lookup structure
+	
+	}
 
 	void
 	ValidateEMSVariableName(
@@ -358,7 +412,7 @@ namespace DataRuntimeLanguage {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

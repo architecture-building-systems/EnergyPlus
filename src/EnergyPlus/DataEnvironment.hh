@@ -2,8 +2,8 @@
 #define DataEnvironment_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1D.hh>
-#include <ObjexxFCL/FArray1S.hh>
+#include <ObjexxFCL/Array1D.hh>
+#include <ObjexxFCL/Array1S.hh>
 #include <ObjexxFCL/MArray1.hh>
 #include <ObjexxFCL/Optional.hh>
 
@@ -22,6 +22,7 @@ namespace DataEnvironment {
 	extern Real64 const EarthRadius; // Radius of the Earth (m)
 	extern Real64 const AtmosphericTempGradient; // Standard atmospheric air temperature gradient (K/m)
 	extern Real64 const SunIsUpValue; // if Cos Zenith Angle of the sun is >= this value, the sun is "up"
+	extern Real64 const StdPressureSeaLevel; // Standard barometric pressure at sea level (Pa)
 
 	// DERIVED TYPE DEFINITIONS:
 	// na
@@ -53,8 +54,6 @@ namespace DataEnvironment {
 	extern Real64 GroundTempFC; // Current ground temperature defined for F or C factor method {C}
 	extern Real64 GroundTemp_Surface; // Current surface ground temperature {C}
 	extern Real64 GroundTemp_Deep; // Current deep ground temperature
-	extern FArray1D< Real64 > PubGroundTempSurface; // All 12 Surf Gnd Temps (assigned in Weather Mgr, used in PlantPipeHeatTransfer)
-	extern bool PubGroundTempSurfFlag; // Flag for if Surf Ground Temps Exist in idf  (assigned, used same as PubGroundTempSurface)
 	extern int HolidayIndex; // Indicates whether current day is a holiday and if so what type
 	// HolidayIndex=(0-no holiday, 1-holiday type 1, ...)
 	extern int HolidayIndexTomorrow; // Tomorrow's Holiday Index
@@ -99,7 +98,7 @@ namespace DataEnvironment {
 	extern Real64 WaterMainsTemp; // Current water mains temperature
 	extern int Year; // Current calendar year of the simulation
 	extern int YearTomorrow; // Tomorrow's calendar year of the simulation
-	extern FArray1D< Real64 > SOLCOS; // Solar direction cosines at current time step
+	extern Array1D< Real64 > SOLCOS; // Solar direction cosines at current time step
 	extern Real64 CloudFraction; // Fraction of sky covered by clouds
 	extern Real64 HISKF; // Exterior horizontal illuminance from sky (lux).
 	extern Real64 HISUNF; // Exterior horizontal beam illuminance (lux)
@@ -109,7 +108,8 @@ namespace DataEnvironment {
 	extern Real64 SkyClearness; // Sky clearness (see subr. DayltgLuminousEfficacy)
 	extern Real64 SkyBrightness; // Sky brightness (see subr. DayltgLuminousEfficacy)
 	extern Real64 StdBaroPress; // Standard "atmospheric pressure" based on elevation (ASHRAE HOF p6.1)
-	extern Real64 StdRhoAir; // Standard "rho air" set in WeatherManager - based on StdBaroPress
+	extern Real64 StdRhoAir; // Standard "rho air" set in WeatherManager - based on StdBaroPress at elevation
+	extern Real64 rhoAirSTP; // Standard density of dry air at 101325 Pa, 20.0C temperaure 
 	extern Real64 TimeZoneNumber; // Time Zone Number of building location
 	extern Real64 TimeZoneMeridian; // Standard Meridian of TimeZone
 	extern std::string EnvironmentName; // Current environment name (longer for weather file names)
@@ -161,6 +161,11 @@ namespace DataEnvironment {
 
 	// Functions
 
+	// Clears the global data in DataEnvironment.
+	// Needed for unit tests, should not be normally called.
+	void
+	clear_state();
+
 	Real64
 	OutDryBulbTempAt( Real64 const Z ); // Height above ground (m)
 
@@ -179,9 +184,9 @@ namespace DataEnvironment {
 	void
 	SetOutBulbTempAt(
 		int const NumItems,
-		FArray1S< Real64 > const Heights,
-		FArray1S< Real64 > DryBulb,
-		FArray1S< Real64 > WetBulb,
+		Array1S< Real64 > const Heights,
+		Array1S< Real64 > DryBulb,
+		Array1S< Real64 > WetBulb,
 		std::string const & Settings
 	);
 
@@ -233,8 +238,8 @@ namespace DataEnvironment {
 	void
 	SetWindSpeedAt(
 		int const NumItems,
-		FArray1S< Real64 > const Heights,
-		FArray1S< Real64 > LocalWindSpeed,
+		Array1S< Real64 > const Heights,
+		Array1S< Real64 > LocalWindSpeed,
 		std::string const & Settings
 	);
 
@@ -244,7 +249,7 @@ namespace DataEnvironment {
 		int const NumItems,
 		H const Heights,
 		W LocalWindSpeed,
-		std::string const & Settings
+		std::string const & EP_UNUSED( Settings )
 	)
 	{
 		if ( SiteWindExp == 0.0 ) {
@@ -264,7 +269,7 @@ namespace DataEnvironment {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

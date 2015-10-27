@@ -3,7 +3,7 @@
 #include <cmath>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
+#include <ObjexxFCL/Array.functions.hh>
 #include <ObjexxFCL/Fmath.hh>
 #include <ObjexxFCL/gio.hh>
 #include <ObjexxFCL/MArray.functions.hh>
@@ -93,6 +93,11 @@ namespace ThermalComfort {
 
 	//Use statements for access to subroutines in other modules
 	using Psychrometrics::PsyRhFnTdbWPb;
+
+	namespace {
+		// clear_state variables
+		static bool FirstTimeFlag( true ); // Flag set to make sure you get input once
+	}
 
 	// Data
 	// MODULE PARAMETER DEFINITIONS
@@ -198,17 +203,22 @@ namespace ThermalComfort {
 	Real64 TotalAnyZoneNotMetHeatingOccupied( 0.0 );
 	Real64 TotalAnyZoneNotMetCoolingOccupied( 0.0 );
 	Real64 TotalAnyZoneNotMetOccupied( 0.0 );
-	FArray1D< Real64 > ZoneOccHrs;
+	Array1D< Real64 > ZoneOccHrs;
 
 	// Subroutine Specifications for the Thermal Comfort module
 
 	// Object Data
-	FArray1D< ThermalComfortInASH55Type > ThermalComfortInASH55;
-	FArray1D< ThermalComfortSetPointType > ThermalComfortSetPoint;
-	FArray1D< ThermalComfortDataType > ThermalComfortData;
-	FArray1D< AngleFactorData > AngleFactorList; // Angle Factor List data for each Angle Factor List
+	Array1D< ThermalComfortInASH55Type > ThermalComfortInASH55;
+	Array1D< ThermalComfortSetPointType > ThermalComfortSetPoint;
+	Array1D< ThermalComfortDataType > ThermalComfortData;
+	Array1D< AngleFactorData > AngleFactorList; // Angle Factor List data for each Angle Factor List
 
 	// Functions
+	void
+	clear_state()
+	{
+		FirstTimeFlag = true;
+	}
 
 	void
 	ManageThermalComfort( bool const InitializeOnly ) // when called from ZTPC and calculations aren't needed
@@ -245,7 +255,6 @@ namespace ThermalComfort {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		static bool FirstTimeFlag( true ); // Flag set to make sure you get input once
 		static bool ASH55Flag( false );
 		static bool CEN15251Flag( false );
 
@@ -466,7 +475,6 @@ namespace ThermalComfort {
 		// SUBROUTINE PARAMETER DEFINITIONS:
 		int const MaxIter( 150 ); // Limit of iteration
 		Real64 const StopIterCrit( 0.00015 ); // Stop criteria for iteration
-		Real64 const SkinEmiss( 0.97 ); // Emissivity of clothing-skin surface
 		// INTERFACE BLOCK SPECIFICATIONS:
 		// na
 
@@ -1189,9 +1197,9 @@ namespace ThermalComfort {
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 
-		static FArray1D< Real64 > Coeff( 2 ); // Coefficients used in Range-Kutta's Method
-		static FArray1D< Real64 > Temp( 2 ); // Temperature
-		static FArray1D< Real64 > TempChange( 2 ); // Change of temperature
+		static Array1D< Real64 > Coeff( 2 ); // Coefficients used in Range-Kutta's Method
+		static Array1D< Real64 > Temp( 2 ); // Temperature
+		static Array1D< Real64 > TempChange( 2 ); // Change of temperature
 
 		Real64 BodyWt; // Weight of body, kg
 		Real64 DayNum; // Number of days of acclimation
@@ -1359,9 +1367,9 @@ namespace ThermalComfort {
 
 	void
 	DERIV(
-		int & TempIndiceNum, // Number of temperature indices  unused1208
-		FArray1A< Real64 > Temp, // Temperature unused1208
-		FArray1A< Real64 > TempChange // Change of temperature
+		int & EP_UNUSED( TempIndiceNum ), // Number of temperature indices  unused1208
+		Array1A< Real64 > Temp, // Temperature unused1208
+		Array1A< Real64 > TempChange // Change of temperature
 	)
 	{
 
@@ -1577,9 +1585,9 @@ namespace ThermalComfort {
 		int & NEQ,
 		Real64 & H,
 		Real64 & X,
-		FArray1A< Real64 > Y,
-		FArray1A< Real64 > DY,
-		FArray1A< Real64 > C
+		Array1A< Real64 > Y,
+		Array1A< Real64 > DY,
+		Array1A< Real64 > C
 	)
 	{
 
@@ -1626,7 +1634,7 @@ namespace ThermalComfort {
 		int J;
 		Real64 B;
 		Real64 H2;
-		static FArray1D< Real64 > const A( 2, { 0.29289321881345, 1.70710678118654 } );
+		static Array1D< Real64 > const A( 2, { 0.29289321881345, 1.70710678118654 } );
 
 		H2 = 0.5 * H;
 
@@ -1683,7 +1691,6 @@ namespace ThermalComfort {
 		using namespace DataGlobals;
 		using namespace DataHeatBalance;
 		using DataSurfaces::Surface;
-		using DataSurfaces::TotSurfaces;
 		using InputProcessor::GetNumObjectsFound;
 		using InputProcessor::GetObjectItem;
 		using InputProcessor::FindItemInList;
@@ -1732,7 +1739,7 @@ namespace ThermalComfort {
 
 			AngleFactorList( Item ).Name = cAlphaArgs( 1 ); // no need for verification/uniqueness.
 			AngleFactorList( Item ).ZoneName = cAlphaArgs( 2 );
-			AngleFactorList( Item ).ZonePtr = FindItemInList( cAlphaArgs( 2 ), Zone.Name(), NumOfZones );
+			AngleFactorList( Item ).ZonePtr = FindItemInList( cAlphaArgs( 2 ), Zone );
 			if ( AngleFactorList( Item ).ZonePtr == 0 ) {
 				ShowSevereError( cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + "\", invalid - not found" );
 				ShowContinueError( "...invalid " + cAlphaFieldNames( 2 ) + "=\"" + cAlphaArgs( 2 ) + "\"." );
@@ -1751,7 +1758,7 @@ namespace ThermalComfort {
 
 			for ( SurfNum = 1; SurfNum <= AngleFactorList( Item ).TotAngleFacSurfaces; ++SurfNum ) {
 				AngleFactorList( Item ).SurfaceName( SurfNum ) = cAlphaArgs( SurfNum + 2 );
-				AngleFactorList( Item ).SurfacePtr( SurfNum ) = FindItemInList( cAlphaArgs( SurfNum + 2 ), Surface.Name(), TotSurfaces );
+				AngleFactorList( Item ).SurfacePtr( SurfNum ) = FindItemInList( cAlphaArgs( SurfNum + 2 ), Surface );
 				AngleFactorList( Item ).AngleFactor( SurfNum ) = rNumericArgs( SurfNum );
 				// Error trap for surfaces that do not exist or surfaces not in the zone
 				if ( AngleFactorList( Item ).SurfacePtr( SurfNum ) == 0 ) {
@@ -1785,7 +1792,7 @@ namespace ThermalComfort {
 
 		for ( Item = 1; Item <= TotPeople; ++Item ) {
 			if ( People( Item ).MRTCalcType != AngleFactor ) continue;
-			People( Item ).AngleFactorListPtr = FindItemInList( People( Item ).AngleFactorListName, AngleFactorList.Name(), NumOfAngleFactorLists );
+			People( Item ).AngleFactorListPtr = FindItemInList( People( Item ).AngleFactorListName, AngleFactorList );
 			WhichAFList = People( Item ).AngleFactorListPtr;
 			if ( WhichAFList == 0 ) {
 				ShowSevereError( cCurrentModuleObject + "=\"" + People( Item ).AngleFactorListName + "\", invalid" );
@@ -1849,7 +1856,7 @@ namespace ThermalComfort {
 
 		for ( SurfNum = 1; SurfNum <= AngleFactorList( AngleFacNum ).TotAngleFacSurfaces; ++SurfNum ) {
 
-			SurfaceTemp = TH( AngleFactorList( AngleFacNum ).SurfacePtr( SurfNum ), 1, 2 );
+			SurfaceTemp = TH( 2, 1, AngleFactorList( AngleFacNum ).SurfacePtr( SurfNum ) );
 			SurfTempAngleFacSummed += SurfaceTemp * AngleFactorList( AngleFacNum ).AngleFactor( SurfNum );
 
 		}
@@ -1981,7 +1988,7 @@ namespace ThermalComfort {
 			RadTemp = MRT( ZoneNum );
 		} else if ( SELECT_CASE_var == SurfaceWeighted ) {
 			ZoneRadTemp = MRT( ZoneNum );
-			SurfaceTemp = TH( People( PeopleListNum ).SurfacePtr, 1, 2 );
+			SurfaceTemp = TH( 2, 1, People( PeopleListNum ).SurfacePtr );
 			RadTemp = ( ZoneRadTemp + SurfaceTemp ) / 2.0;
 		} else if ( SELECT_CASE_var == AngleFactor ) {
 			RadTemp = CalcAngleFactorMRT( People( PeopleListNum ).AngleFactorListPtr );
@@ -2207,6 +2214,22 @@ namespace ThermalComfort {
 	}
 
 	void
+	ResetThermalComfortSimpleASH55(){
+		// Jason Glazer - October 2015
+		// Reset thermal comfort table gathering arrays to zero for multi-year simulations
+		// so that only last year is reported in tabular reports
+		int iZone;
+		for ( iZone = 1; iZone <= NumOfZones; ++iZone ) {
+			ThermalComfortInASH55( iZone ).totalTimeNotWinter = 0.0;
+			ThermalComfortInASH55( iZone ).totalTimeNotSummer = 0.0;
+			ThermalComfortInASH55( iZone ).totalTimeNotEither = 0.0;
+		}
+		TotalAnyZoneTimeNotSimpleASH55Winter = 0.0;
+		TotalAnyZoneTimeNotSimpleASH55Summer = 0.0;
+		TotalAnyZoneTimeNotSimpleASH55Either = 0.0;
+	}
+
+	void
 	CalcIfSetPointMet()
 	{
 		// SUBROUTINE INFORMATION:
@@ -2374,6 +2397,26 @@ namespace ThermalComfort {
 	}
 
 	void
+	ResetSetPointMet(){
+		// Jason Glazer - October 2015
+		// Reset set point not met table gathering arrays to zero for multi-year simulations
+		// so that only last year is reported in tabular reports
+		int iZone;
+		for ( iZone = 1; iZone <= NumOfZones; ++iZone ) {
+			ThermalComfortSetPoint( iZone ).totalNotMetHeating = 0.0;
+			ThermalComfortSetPoint( iZone ).totalNotMetCooling = 0.0;
+			ThermalComfortSetPoint( iZone ).totalNotMetHeatingOccupied = 0.0;
+			ThermalComfortSetPoint( iZone ).totalNotMetCoolingOccupied = 0.0;
+		}
+		TotalAnyZoneNotMetHeating = 0.0;
+		TotalAnyZoneNotMetCooling = 0.0;
+		TotalAnyZoneNotMetHeatingOccupied = 0.0;
+		TotalAnyZoneNotMetCoolingOccupied = 0.0;
+		TotalAnyZoneNotMetOccupied = 0.0;
+	}
+
+
+	void
 	CalcThermalComfortAdaptiveASH55(
 		bool const initiate, // true if supposed to initiate
 		Optional_bool_const wthrsim, // true if this is a weather simulation
@@ -2429,13 +2472,11 @@ namespace ThermalComfort {
 		static Real64 avgDryBulbASH( 0.0 );
 		Real64 dryBulb;
 		static Real64 runningAverageASH( 0.0 );
-		static FArray1D< Real64 > monthlyTemp( 12, 0.0 );
+		static Array1D< Real64 > monthlyTemp( 12, 0.0 );
 		Real64 tComf;
 		Real64 numOccupants;
 		int statFile;
 		int epwFile;
-		int pMonth;
-		int pDay;
 		bool statFileExists;
 		bool epwFileExists;
 		static bool useStatData( false );
@@ -2671,7 +2712,7 @@ namespace ThermalComfort {
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
 		static Real64 const alpha( 0.8 );
-		static FArray1D< Real64 > const alpha_pow( { pow_6( alpha ), pow_5( alpha ), pow_4( alpha ), pow_3( alpha ), pow_2( alpha ), alpha, 1.0 } ); // alpha^(7-i)
+		static Array1D< Real64 > const alpha_pow( { pow_6( alpha ), pow_5( alpha ), pow_4( alpha ), pow_3( alpha ), pow_2( alpha ), alpha, 1.0 } ); // alpha^(7-i)
 		static gio::Fmt fmtA( "(A)" );
 
 		// INTERFACE BLOCK SPECIFICATIONS:
@@ -2927,7 +2968,7 @@ namespace ThermalComfort {
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 

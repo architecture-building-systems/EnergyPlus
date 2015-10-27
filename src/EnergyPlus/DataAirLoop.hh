@@ -2,7 +2,7 @@
 #define DataAirLoop_hh_INCLUDED
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray1D.hh>
+#include <ObjexxFCL/Array1D.hh>
 
 // EnergyPlus Headers
 #include <EnergyPlus.hh>
@@ -28,6 +28,11 @@ namespace DataAirLoop {
 	// MODULE VARIABLE DECLARATIONS:
 
 	extern int NumOASystems; // Number of Outdoor Air Systems
+	extern bool AirLoopInputsFilled; // Set to TRUE after first pass through air loop
+
+	// Variables specific to AirflowNetwork simulations.
+	// Avoid using these for other purposes since these variables are only reset to 0 within AirflowNetworkBalanceManager, line 322.
+	// Non-AFN simulations may have multiple air loops and use of these variables may yield unintended results.
 	extern int LoopFanOperationMode; // OnOff fan operation mode
 	extern Real64 LoopSystemOnMassFlowrate; // Loop mass flow rate during on cycle using an OnOff fan
 	extern Real64 LoopSystemOffMassFlowrate; // Loop mass flow rate during off cycle using an OnOff fan
@@ -36,7 +41,6 @@ namespace DataAirLoop {
 	extern Real64 LoopOnOffFanRTF; // OnOff fan run time fraction in an HVAC Air Loop
 	extern Real64 LoopDXCoilRTF; // OnOff fan run time fraction in an HVAC Air Loop
 	extern Real64 LoopCompCycRatio; // Loop compressor cycling ratio for multispeed heat pump
-	extern bool AirLoopInputsFilled; // Set to TRUE after first pass through air loop
 
 	// Types
 
@@ -48,17 +52,17 @@ namespace DataAirLoop {
 		int NumSupplyNodes; // number of supply nodes exiting primary air system
 		int NumZonesCooled; // number of zones cooled by this primary air system
 		int NumZonesHeated; // number of zones heated by this primary air system
-		FArray1D_int ZoneEquipReturnNodeNum; // Zone Equip side return air node numbers
-		FArray1D_int ZoneEquipSupplyNodeNum; // Zone equip side supply air node numbers
-		FArray1D_int AirLoopReturnNodeNum; // Air loop side return air node numbers
-		FArray1D_int AirLoopSupplyNodeNum; // Air loop side supply air node numbers
-		FArray1D_int CoolCtrlZoneNums; // Controlled zone numbers of zones cooled by this air loop
-		FArray1D_int HeatCtrlZoneNums; // Controlled zone numbers of zones heated by this air loop
-		FArray1D_int CoolZoneInletNodes; // Zone inlet node numbers of zones cooled by this air loop
-		FArray1D_int HeatZoneInletNodes; // Zone inlet node numbers of zones heated by this air loop
-		FArray1D_int TermUnitCoolInletNodes; // Air terminal unit cooling inlet node numbers for this air loop
-		FArray1D_int TermUnitHeatInletNodes; // Air terminal unit heating inlet node numbers for this air loop
-		FArray1D_int SupplyDuctType; // 1=main, 2=cooling, 3=heating, 4=other
+		Array1D_int ZoneEquipReturnNodeNum; // Zone Equip side return air node numbers
+		Array1D_int ZoneEquipSupplyNodeNum; // Zone equip side supply air node numbers
+		Array1D_int AirLoopReturnNodeNum; // Air loop side return air node numbers
+		Array1D_int AirLoopSupplyNodeNum; // Air loop side supply air node numbers
+		Array1D_int CoolCtrlZoneNums; // Controlled zone numbers of zones cooled by this air loop
+		Array1D_int HeatCtrlZoneNums; // Controlled zone numbers of zones heated by this air loop
+		Array1D_int CoolZoneInletNodes; // Zone inlet node numbers of zones cooled by this air loop
+		Array1D_int HeatZoneInletNodes; // Zone inlet node numbers of zones heated by this air loop
+		Array1D_int TermUnitCoolInletNodes; // Air terminal unit cooling inlet node numbers for this air loop
+		Array1D_int TermUnitHeatInletNodes; // Air terminal unit heating inlet node numbers for this air loop
+		Array1D_int SupplyDuctType; // 1=main, 2=cooling, 3=heating, 4=other
 
 		// Default Constructor
 		AirLoopZoneEquipConnectData() :
@@ -75,17 +79,17 @@ namespace DataAirLoop {
 			int const NumSupplyNodes, // number of supply nodes exiting primary air system
 			int const NumZonesCooled, // number of zones cooled by this primary air system
 			int const NumZonesHeated, // number of zones heated by this primary air system
-			FArray1_int const & ZoneEquipReturnNodeNum, // Zone Equip side return air node numbers
-			FArray1_int const & ZoneEquipSupplyNodeNum, // Zone equip side supply air node numbers
-			FArray1_int const & AirLoopReturnNodeNum, // Air loop side return air node numbers
-			FArray1_int const & AirLoopSupplyNodeNum, // Air loop side supply air node numbers
-			FArray1_int const & CoolCtrlZoneNums, // Controlled zone numbers of zones cooled by this air loop
-			FArray1_int const & HeatCtrlZoneNums, // Controlled zone numbers of zones heated by this air loop
-			FArray1_int const & CoolZoneInletNodes, // Zone inlet node numbers of zones cooled by this air loop
-			FArray1_int const & HeatZoneInletNodes, // Zone inlet node numbers of zones heated by this air loop
-			FArray1_int const & TermUnitCoolInletNodes, // Air terminal unit cooling inlet node numbers for this air loop
-			FArray1_int const & TermUnitHeatInletNodes, // Air terminal unit heating inlet node numbers for this air loop
-			FArray1_int const & SupplyDuctType // 1=main, 2=cooling, 3=heating, 4=other
+			Array1_int const & ZoneEquipReturnNodeNum, // Zone Equip side return air node numbers
+			Array1_int const & ZoneEquipSupplyNodeNum, // Zone equip side supply air node numbers
+			Array1_int const & AirLoopReturnNodeNum, // Air loop side return air node numbers
+			Array1_int const & AirLoopSupplyNodeNum, // Air loop side supply air node numbers
+			Array1_int const & CoolCtrlZoneNums, // Controlled zone numbers of zones cooled by this air loop
+			Array1_int const & HeatCtrlZoneNums, // Controlled zone numbers of zones heated by this air loop
+			Array1_int const & CoolZoneInletNodes, // Zone inlet node numbers of zones cooled by this air loop
+			Array1_int const & HeatZoneInletNodes, // Zone inlet node numbers of zones heated by this air loop
+			Array1_int const & TermUnitCoolInletNodes, // Air terminal unit cooling inlet node numbers for this air loop
+			Array1_int const & TermUnitHeatInletNodes, // Air terminal unit heating inlet node numbers for this air loop
+			Array1_int const & SupplyDuctType // 1=main, 2=cooling, 3=heating, 4=other
 		) :
 			AirLoopName( AirLoopName ),
 			NumReturnNodes( NumReturnNodes ),
@@ -142,9 +146,9 @@ namespace DataAirLoop {
 		int StartTime; // cycle on time (in SimTimeSteps)
 		int StopTime; // cycle off time (in SimTimeSteps)
 		Real64 ReqSupplyFrac; // required system flow rate (as a fraction)
-		FArray1D_string AvailManagerName; // name of each availability manager
-		FArray1D_int AvailManagerType; // type of availability manager
-		FArray1D_int AvailManagerNum; // index for availability manager
+		Array1D_string AvailManagerName; // name of each availability manager
+		Array1D_int AvailManagerType; // type of availability manager
+		Array1D_int AvailManagerNum; // index for availability manager
 
 		// Default Constructor
 		DefinePriAirSysAvailMgrs() :
@@ -162,9 +166,9 @@ namespace DataAirLoop {
 			int const StartTime, // cycle on time (in SimTimeSteps)
 			int const StopTime, // cycle off time (in SimTimeSteps)
 			Real64 const ReqSupplyFrac, // required system flow rate (as a fraction)
-			FArray1_string const & AvailManagerName, // name of each availability manager
-			FArray1_int const & AvailManagerType, // type of availability manager
-			FArray1_int const & AvailManagerNum // index for availability manager
+			Array1_string const & AvailManagerName, // name of each availability manager
+			Array1_int const & AvailManagerType, // type of availability manager
+			Array1_int const & AvailManagerNum // index for availability manager
 		) :
 			NumAvailManagers( NumAvailManagers ),
 			AvailStatus( AvailStatus ),
@@ -182,8 +186,8 @@ namespace DataAirLoop {
 	{
 		// Members
 		int NumZones;
-		FArray1D_int Zone;
-		FArray1D_int ActualZoneNumber;
+		Array1D_int Zone;
+		Array1D_int ActualZoneNumber;
 
 		// Default Constructor
 		AirLooptoZoneData() :
@@ -193,8 +197,8 @@ namespace DataAirLoop {
 		// Member Constructor
 		AirLooptoZoneData(
 			int const NumZones,
-			FArray1_int const & Zone,
-			FArray1_int const & ActualZoneNumber
+			Array1_int const & Zone,
+			Array1_int const & ActualZoneNumber
 		) :
 			NumZones( NumZones ),
 			Zone( Zone ),
@@ -353,7 +357,6 @@ namespace DataAirLoop {
 		Real64 ZoneExhaustBalanced; // zone exhaust air that is balanced by simple air flow for loop [kg/s]
 		Real64 DesSupply; // design supply air mass flow rate for loop [kg/s]
 		Real64 SysToZoneDesFlowRatio; // System design flow divided by the sum of the zone design flows
-		Real64 TotReturn; // the return air mass flow rate for this loop [kg/s]
 		Real64 ReqSupplyFrac; // required flow (as a fraction of DesSupply) set by a manager
 		Real64 MinOutAir; // minimum outside air mass flow rate [kg/s]
 		Real64 MaxOutAir; // maximum outside air mass flow rate [kg/s]
@@ -366,6 +369,7 @@ namespace DataAirLoop {
 		Real64 FanPLR; // Operating PLR of air loop fan
 		Real64 OAFrac; // fraction of outside air to mixed air mass flow rate
 		Real64 ZoneMixingFlow; // total zone mixing net flow used to cap the return flow
+		Real64 RetFlowAdjustment; // difference between user-specified return flow and default return flow
 		bool FlowError; // error flag for flow error message
 
 		// Default Constructor
@@ -374,7 +378,6 @@ namespace DataAirLoop {
 			ZoneExhaustBalanced( 0.0 ),
 			DesSupply( 0.0 ),
 			SysToZoneDesFlowRatio( 0.0 ),
-			TotReturn( 0.0 ),
 			ReqSupplyFrac( 1.0 ),
 			MinOutAir( 0.0 ),
 			MaxOutAir( 0.0 ),
@@ -387,48 +390,8 @@ namespace DataAirLoop {
 			FanPLR( 0.0 ),
 			OAFrac( 0.0 ),
 			ZoneMixingFlow( 0.0 ),
+			RetFlowAdjustment( 0.0 ),
 			FlowError( false )
-		{}
-
-		// Member Constructor
-		AirLoopFlowData(
-			Real64 const ZoneExhaust, // total of zone exhaust air mass flow rate for this loop [kg/s]
-			Real64 const ZoneExhaustBalanced, // zone exhaust air that is balanced by simple air flow for loop [kg/s]
-			Real64 const DesSupply, // design supply air mass flow rate for loop [kg/s]
-			Real64 const SysToZoneDesFlowRatio, // System design flow divided by the sum of the zone design flows
-			Real64 const TotReturn, // the return air mass flow rate for this loop [kg/s]
-			Real64 const ReqSupplyFrac, // required flow (as a fraction of DesSupply) set by a manager
-			Real64 const MinOutAir, // minimum outside air mass flow rate [kg/s]
-			Real64 const MaxOutAir, // maximum outside air mass flow rate [kg/s]
-			Real64 const OAMinFrac, // minimum outside air flow fraction this time step
-			Real64 const Previous, // Previous mass air flow rate for this loop [kg/s]
-			Real64 const SupFlow, // supply air flow rate [kg/s]
-			Real64 const RetFlow, // return air flow rate [kg/s]
-			Real64 const RetFlow0, // sum of zone return flows before adjusting for total loop exhaust
-			Real64 const RecircFlow, // sum of zone plenum recirculated flows
-			Real64 const FanPLR, // Operating PLR of air loop fan
-			Real64 const OAFrac, // fraction of outside air to mixed air mass flow rate
-			Real64 const ZoneMixingFlow, // total zone mixing net flow used to cap the return flow
-			bool const FlowError // error flag for flow error message
-		) :
-			ZoneExhaust( ZoneExhaust ),
-			ZoneExhaustBalanced( ZoneExhaustBalanced ),
-			DesSupply( DesSupply ),
-			SysToZoneDesFlowRatio( SysToZoneDesFlowRatio ),
-			TotReturn( TotReturn ),
-			ReqSupplyFrac( ReqSupplyFrac ),
-			MinOutAir( MinOutAir ),
-			MaxOutAir( MaxOutAir ),
-			OAMinFrac( OAMinFrac ),
-			Previous( Previous ),
-			SupFlow( SupFlow ),
-			RetFlow( RetFlow ),
-			RetFlow0( RetFlow0 ),
-			RecircFlow( RecircFlow ),
-			FanPLR( FanPLR ),
-			OAFrac( OAFrac ),
-			ZoneMixingFlow( ZoneMixingFlow ),
-			FlowError( FlowError )
 		{}
 
 	};
@@ -466,14 +429,14 @@ namespace DataAirLoop {
 		int NumComponents;
 		int NumControllers;
 		int NumSimpleControllers; // number of CONTROLLER:SIMPLE objects in OA Sys controller list
-		FArray1D_string ComponentName;
-		FArray1D_string ComponentType;
-		FArray1D_int ComponentType_Num; // Parameterized (see above) Component Types this
+		Array1D_string ComponentName;
+		Array1D_string ComponentType;
+		Array1D_int ComponentType_Num; // Parameterized (see above) Component Types this
 		// module can address
-		FArray1D_int ComponentIndex; // Which one in list -- updated by routines called from here
-		FArray1D_string ControllerName;
-		FArray1D_string ControllerType;
-		FArray1D_int ControllerIndex; // Which one in list -- updated by routines called from here
+		Array1D_int ComponentIndex; // Which one in list -- updated by routines called from here
+		Array1D_string ControllerName;
+		Array1D_string ControllerType;
+		Array1D_int ControllerIndex; // Which one in list -- updated by routines called from here
 
 		// Default Constructor
 		OutsideAirSysProps() :
@@ -492,13 +455,13 @@ namespace DataAirLoop {
 			int const NumComponents,
 			int const NumControllers,
 			int const NumSimpleControllers, // number of CONTROLLER:SIMPLE objects in OA Sys controller list
-			FArray1_string const & ComponentName,
-			FArray1_string const & ComponentType,
-			FArray1_int const & ComponentType_Num, // Parameterized (see above) Component Types this
-			FArray1_int const & ComponentIndex, // Which one in list -- updated by routines called from here
-			FArray1_string const & ControllerName,
-			FArray1_string const & ControllerType,
-			FArray1_int const & ControllerIndex // Which one in list -- updated by routines called from here
+			Array1_string const & ComponentName,
+			Array1_string const & ComponentType,
+			Array1_int const & ComponentType_Num, // Parameterized (see above) Component Types this
+			Array1_int const & ComponentIndex, // Which one in list -- updated by routines called from here
+			Array1_string const & ControllerName,
+			Array1_string const & ControllerType,
+			Array1_int const & ControllerIndex // Which one in list -- updated by routines called from here
 		) :
 			Name( Name ),
 			ControllerListName( ControllerListName ),
@@ -519,14 +482,19 @@ namespace DataAirLoop {
 	};
 
 	// Object Data
-	extern FArray1D< AirLoopZoneEquipConnectData > AirToZoneNodeInfo;
-	extern FArray1D< AirLoopOutsideAirConnectData > AirToOANodeInfo;
-	extern FArray1D< DefinePriAirSysAvailMgrs > PriAirSysAvailMgr;
-	extern FArray1D< AirLooptoZoneData > AirLoopZoneInfo;
-	extern FArray1D< AirLoopControlData > AirLoopControlInfo;
-	extern FArray1D< AirLoopFlowData > AirLoopFlow;
-	extern FArray1D< OAControllerData > OAControllerInfo;
-	extern FArray1D< OutsideAirSysProps > OutsideAirSys;
+	extern Array1D< AirLoopZoneEquipConnectData > AirToZoneNodeInfo;
+	extern Array1D< AirLoopOutsideAirConnectData > AirToOANodeInfo;
+	extern Array1D< DefinePriAirSysAvailMgrs > PriAirSysAvailMgr;
+	extern Array1D< AirLooptoZoneData > AirLoopZoneInfo;
+	extern Array1D< AirLoopControlData > AirLoopControlInfo;
+	extern Array1D< AirLoopFlowData > AirLoopFlow;
+	extern Array1D< OAControllerData > OAControllerInfo;
+	extern Array1D< OutsideAirSysProps > OutsideAirSys;
+
+	// Clears the global data in DataAirLoop.
+	// Needed for unit tests, should not be normally called.
+	void
+	clear_state();
 
 } // DataAirLoop
 

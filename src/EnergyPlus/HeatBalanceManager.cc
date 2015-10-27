@@ -3,9 +3,8 @@
 #include <string>
 
 // ObjexxFCL Headers
-#include <ObjexxFCL/FArray.functions.hh>
-#include <ObjexxFCL/FArrayS.functions.hh>
-#include <ObjexxFCL/FArray1S.io.hh>
+#include <ObjexxFCL/Array.functions.hh>
+#include <ObjexxFCL/ArrayS.functions.hh>
 #include <ObjexxFCL/Fmath.hh>
 #include <ObjexxFCL/gio.hh>
 #include <ObjexxFCL/MArray.functions.hh>
@@ -37,6 +36,7 @@
 #include <EMSManager.hh>
 #include <General.hh>
 #include <HeatBalanceSurfaceManager.hh>
+#include <HVACSizingSimulationManager.hh>
 #include <InputProcessor.hh>
 #include <InternalHeatGains.hh>
 #include <MatrixDataManager.hh>
@@ -130,38 +130,48 @@ namespace HeatBalanceManager {
 	static std::string const BlankString;
 	static gio::Fmt fmtA( "(A)" );
 
-	FArray1D_string const PassFail( 2, { "Fail", "Pass" } );
+	Array1D_string const PassFail( 2, { "Fail", "Pass" } );
 
 	// DERIVED TYPE DEFINITIONS
 
 	// MODULE VARIABLE DECLARATIONS:
 
+	namespace {
+		// These were static variables within different functions. They were pulled out into the namespace
+		// to facilitate easier unit testing of those functions.
+		// These are purposefully not in the header file as an extern variable. No one outside of this should
+		// use these. They are cleared by clear_state() for use by unit tests, but normal simulations should be unaffected.
+		// This is purposefully in an anonymous namespace so nothing outside this implementation file can use it.
+		bool ManageHeatBalanceGetInputFlag( true );
+	}
+
+
 	//Real Variables for the Heat Balance Simulation
 	//Variables used to determine warmup convergence
-	FArray1D< Real64 > MaxCoolLoadPrevDay; // Max cooling load from the previous day
-	FArray1D< Real64 > MaxCoolLoadZone; // Maximum zone cooling load from the current day
-	FArray1D< Real64 > MaxHeatLoadPrevDay; // Max heating load from the previous day
-	FArray1D< Real64 > MaxHeatLoadZone; // Maximum zone heating load from the current day
-	FArray1D< Real64 > MaxTempPrevDay; // Max temperature from the previous day
-	FArray1D< Real64 > MaxTempZone; // Maximum zone temperature from the current day
-	FArray1D< Real64 > MinTempPrevDay; // Min temperature from the previous day
-	FArray1D< Real64 > MinTempZone; // Minimum zone temperature from the current day
+	Array1D< Real64 > MaxCoolLoadPrevDay; // Max cooling load from the previous day
+	Array1D< Real64 > MaxCoolLoadZone; // Maximum zone cooling load from the current day
+	Array1D< Real64 > MaxHeatLoadPrevDay; // Max heating load from the previous day
+	Array1D< Real64 > MaxHeatLoadZone; // Maximum zone heating load from the current day
+	Array1D< Real64 > MaxTempPrevDay; // Max temperature from the previous day
+	Array1D< Real64 > MaxTempZone; // Maximum zone temperature from the current day
+	Array1D< Real64 > MinTempPrevDay; // Min temperature from the previous day
+	Array1D< Real64 > MinTempZone; // Minimum zone temperature from the current day
 
 	//Variables used to report difference in temperature and load from the last two warmup days
-	FArray1D< Real64 > WarmupTempDiff; // Temperature difference between the last two warmup days
-	FArray1D< Real64 > WarmupLoadDiff; // Zone load differences between the last two warmup days
-	FArray1D< Real64 > TempZoneSecPrevDay; // Zone air temperature from the second last warmup day
-	FArray1D< Real64 > LoadZoneSecPrevDay; // Zone load from the second last warmup day
-	FArray1D< Real64 > TempZonePrevDay; // Zone air temperature from the previous day
-	FArray1D< Real64 > LoadZonePrevDay; // Zone load from the previuos day
-	FArray1D< Real64 > TempZone; // Zone air temperature from the current warmup day
-	FArray1D< Real64 > LoadZone; // Zone load from the current warmup day
+	Array1D< Real64 > WarmupTempDiff; // Temperature difference between the last two warmup days
+	Array1D< Real64 > WarmupLoadDiff; // Zone load differences between the last two warmup days
+	Array1D< Real64 > TempZoneSecPrevDay; // Zone air temperature from the second last warmup day
+	Array1D< Real64 > LoadZoneSecPrevDay; // Zone load from the second last warmup day
+	Array1D< Real64 > TempZonePrevDay; // Zone air temperature from the previous day
+	Array1D< Real64 > LoadZonePrevDay; // Zone load from the previuos day
+	Array1D< Real64 > TempZone; // Zone air temperature from the current warmup day
+	Array1D< Real64 > LoadZone; // Zone load from the current warmup day
 
-	FArray2D< Real64 > TempZoneRpt; // Zone air temperature to report (average over all warmup days)
-	FArray1D< Real64 > TempZoneRptStdDev; // Zone air temperature to report (std dev over all warmup days)
-	FArray2D< Real64 > LoadZoneRpt; // Zone load to report (average over all warmup days)
-	FArray1D< Real64 > LoadZoneRptStdDev; // Zone load to report (std dev over all warmup days)
-	FArray2D< Real64 > MaxLoadZoneRpt; // Maximum zone load for reporting calcs
+	Array2D< Real64 > TempZoneRpt; // Zone air temperature to report (average over all warmup days)
+	Array1D< Real64 > TempZoneRptStdDev; // Zone air temperature to report (std dev over all warmup days)
+	Array2D< Real64 > LoadZoneRpt; // Zone load to report (average over all warmup days)
+	Array1D< Real64 > LoadZoneRptStdDev; // Zone load to report (std dev over all warmup days)
+	Array2D< Real64 > MaxLoadZoneRpt; // Maximum zone load for reporting calcs
 	int CountWarmupDayPoints; // Count of warmup timesteps (to achieve warmup)
 
 	std::string CurrentModuleObject; // to assist in getting input
@@ -178,12 +188,44 @@ namespace HeatBalanceManager {
 	// Reporting routines for module
 
 	// Object Data
-	FArray1D< WarmupConvergence > WarmupConvergenceValues;
+	Array1D< WarmupConvergence > WarmupConvergenceValues;
 
 	// MODULE SUBROUTINES:
 	//*************************************************************************
 
 	// Functions
+
+	// Clears the global data in HeatBalanceManager.
+	// Needed for unit tests, should not be normally called.
+	void
+	clear_state()
+	{
+		ManageHeatBalanceGetInputFlag = true;
+		MaxCoolLoadPrevDay.deallocate();
+		MaxCoolLoadZone.deallocate();
+		MaxHeatLoadPrevDay.deallocate();
+		MaxHeatLoadZone.deallocate();
+		MaxTempPrevDay.deallocate();
+		MaxTempZone.deallocate();
+		MinTempPrevDay.deallocate();
+		MinTempZone.deallocate();
+		WarmupTempDiff.deallocate();
+		WarmupLoadDiff.deallocate();
+		TempZoneSecPrevDay.deallocate();
+		LoadZoneSecPrevDay.deallocate();
+		TempZonePrevDay.deallocate();
+		LoadZonePrevDay.deallocate();
+		TempZone.deallocate();
+		LoadZone.deallocate();
+		TempZoneRpt.deallocate();
+		TempZoneRptStdDev.deallocate();
+		LoadZoneRpt.deallocate();
+		LoadZoneRptStdDev.deallocate();
+		MaxLoadZoneRpt.deallocate();
+		CountWarmupDayPoints = int();
+		CurrentModuleObject = std::string();
+		WarmupConvergenceValues.deallocate();
+	}
 
 	void
 	ManageHeatBalance()
@@ -230,14 +272,16 @@ namespace HeatBalanceManager {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		static bool GetInputFlag( true );
+		//////////// hoisted into namespace changed ManageHeatBalanceGetInputFlag////////////
+		// static bool GetInputFlag( true );
+		////////////////////////////////////////////////
 
 		// FLOW:
 
 		// Get the heat balance input at the beginning of the simulation only
-		if ( GetInputFlag ) {
+		if ( ManageHeatBalanceGetInputFlag ) {
 			GetHeatBalanceInput(); // Obtains heat balance related parameters from input file
-			GetInputFlag = false;
+			ManageHeatBalanceGetInputFlag = false;
 		}
 
 		// These Inits will still have to be looked at as the routines are re-engineered further
@@ -308,7 +352,6 @@ namespace HeatBalanceManager {
 
 		// Using/Aliasing
 		using InternalHeatGains::ManageInternalHeatGains;
-		using DataSystemVariables::DetailedSkyDiffuseAlgorithm;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -399,7 +442,7 @@ namespace HeatBalanceManager {
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
 		int const NumConstrObjects( 5 );
-		static FArray1D_string const ConstrObjects( NumConstrObjects, { "Pipe:Indoor", "Pipe:Outdoor", "Pipe:Underground", "GroundHeatExchanger:Surface", "DaylightingDevice:Tubular" } );
+		static Array1D_string const ConstrObjects( NumConstrObjects, { "Pipe:Indoor", "Pipe:Outdoor", "Pipe:Underground", "GroundHeatExchanger:Surface", "DaylightingDevice:Tubular" } );
 
 		// INTERFACE BLOCK SPECIFICATIONS:
 		// na
@@ -426,9 +469,9 @@ namespace HeatBalanceManager {
 			for ( Loop = 1; Loop <= NumObjects; ++Loop ) {
 				GetObjectItem( ConstrObjects( ONum ), Loop, cAlphaArgs, NumAlphas, rNumericArgs, NumNumbers, Status );
 				if ( ONum != 5 ) {
-					CNum = FindItemInList( cAlphaArgs( 2 ), Construct.Name(), TotConstructs );
+					CNum = FindItemInList( cAlphaArgs( 2 ), Construct );
 				} else {
-					CNum = FindItemInList( cAlphaArgs( 4 ), Construct.Name(), TotConstructs );
+					CNum = FindItemInList( cAlphaArgs( 4 ), Construct );
 				}
 				if ( CNum == 0 ) continue;
 				Construct( CNum ).IsUsed = true;
@@ -602,8 +645,8 @@ namespace HeatBalanceManager {
 		// na
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		FArray1D_string AlphaName( 4 );
-		FArray1D< Real64 > BuildingNumbers( 5 );
+		Array1D_string AlphaName( 4 );
+		Array1D< Real64 > BuildingNumbers( 5 );
 		int NumAlpha;
 		int NumNumber;
 		int IOStat;
@@ -618,12 +661,12 @@ namespace HeatBalanceManager {
 		static gio::Fmt Format_724( "('! <Sky Radiance Distribution>, Value {Anisotropic}',/,'Sky Radiance Distribution,Anisotropic')" );
 		static gio::Fmt Format_726( "('! <Zone Air Solution Algorithm>, Value {ThirdOrderBackwardDifference | AnalyticalSolution | EulerMethod}')" );
 		static gio::Fmt Format_727( "(' Zone Air Solution Algorithm, ',A)" );
-		static gio::Fmt Format_728( "('! <Zone Air Contaminant Balance Simulation>, Simulation {Yes/No}, Carbon Dioxide Concentration')" );
+		static gio::Fmt Format_728( "('! <Zone Air Carbon Dioxide Balance Simulation>, Simulation {Yes/No}, Carbon Dioxide Concentration')" );
 		static gio::Fmt Format_730( "(' Zone Air Carbon Dioxide Balance Simulation, ',A,',',A)" );
-		static gio::Fmt Format_729( "('! <Zone Air Contaminant Balance Simulation>, Simulation {Yes/No}, Generic Contaminant Concentration')" );
+		static gio::Fmt Format_729( "('! <Zone Air Generic Contaminant Balance Simulation>, Simulation {Yes/No}, Generic Contaminant Concentration')" );
 		static gio::Fmt Format_731( "(' Zone Air Generic Contaminant Balance Simulation, ',A,',',A)" );
-		static gio::Fmt Format_732( "('! <Zone Air Mass Flow Balance Simulation>, Simulation {Yes/No}')");
-		static gio::Fmt Format_733( "(' Zone Air Mass Flow Balance Simulation, ',A)");
+		static gio::Fmt Format_732( "('! <Zone Air Mass Flow Balance Simulation>, Enforce Mass Balance, Adjust Zone Mixing, Adjust Zone Infiltration {AddInfiltration | AdjustInfiltration | None}, Infiltration Zones {MixingSourceZonesOnly | AllZones}')" );
+		static gio::Fmt Format_733( "(' Zone Air Mass Flow Balance Simulation, ',A,',',A,',',A,',',A)" );
 
 		//Assign the values to the building data
 
@@ -634,20 +677,20 @@ namespace HeatBalanceManager {
 			GetObjectItem( CurrentModuleObject, 1, AlphaName, NumAlpha, BuildingNumbers, NumNumber, IOStat, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 			// Building Name (remove certain characters)
 			BuildingName = AlphaName( 1 );
-			TMP = index( BuildingName, CHAR( 1 ) );
+			TMP = index( BuildingName, char( 1 ) );
 			while ( TMP != std::string::npos ) {
 				BuildingName[ TMP ] = ',';
-				TMP = index( BuildingName, CHAR( 1 ) );
+				TMP = index( BuildingName, char( 1 ) );
 			}
-			TMP = index( BuildingName, CHAR( 2 ) );
+			TMP = index( BuildingName, char( 2 ) );
 			while ( TMP != std::string::npos ) {
 				BuildingName[ TMP ] = '!';
-				TMP = index( BuildingName, CHAR( 2 ) );
+				TMP = index( BuildingName, char( 2 ) );
 			}
-			TMP = index( BuildingName, CHAR( 3 ) );
+			TMP = index( BuildingName, char( 3 ) );
 			while ( TMP != std::string::npos ) {
 				BuildingName[ TMP ] = '\\';
-				TMP = index( BuildingName, CHAR( 3 ) );
+				TMP = index( BuildingName, char( 3 ) );
 			}
 			// Building Azimuth (no validation)
 			BuildingAzimuth = mod( BuildingNumbers( 1 ), 360.0 );
@@ -1051,51 +1094,81 @@ namespace HeatBalanceManager {
 		// A new object is added by B. Nigusse, 02/14
 		CurrentModuleObject = "ZoneAirMassFlowConservation";
 		NumObjects = GetNumObjectsFound(CurrentModuleObject);
+		ZoneAirMassFlow.EnforceZoneMassBalance = false;
 
 		if ( NumObjects > 0 ) {
 			GetObjectItem( CurrentModuleObject, 1, AlphaName, NumAlpha, BuildingNumbers, NumNumber, IOStat, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 			if ( NumAlpha > 0 ) {
 				{ auto const SELECT_CASE_var( AlphaName( 1 ) );
 				if ( SELECT_CASE_var == "YES" ) {
+					ZoneAirMassFlow.BalanceMixing = true;
 					ZoneAirMassFlow.EnforceZoneMassBalance = true;
+					AlphaName( 1 ) = "Yes";
 				} else if ( SELECT_CASE_var == "NO" ) {
-					ZoneAirMassFlow.EnforceZoneMassBalance = false;
+					ZoneAirMassFlow.BalanceMixing = false;
+					AlphaName( 1 ) = "No";
 				} else {
-					ZoneAirMassFlow.EnforceZoneMassBalance = false;
-					AlphaName(1) = "NO";
-					ShowWarningError( CurrentModuleObject + ": Invalid input of " + cAlphaFieldNames(1) + ". The default choice is assigned = NO" );
+					ZoneAirMassFlow.BalanceMixing = false;
+					AlphaName(1) = "No";
+					ShowWarningError( CurrentModuleObject + ": Invalid input of " + cAlphaFieldNames(1) + ". The default choice is assigned = No" );
 				}}
 			}
 			if ( NumAlpha > 1 ) {
 				{ auto const SELECT_CASE_var( AlphaName( 2 ) );
 				if ( SELECT_CASE_var == "ADDINFILTRATIONFLOW" ) {
-					ZoneAirMassFlow.InfiltrationTreatment = true;
+					ZoneAirMassFlow.InfiltrationTreatment = AddInfiltrationFlow;
+					ZoneAirMassFlow.EnforceZoneMassBalance = true;
+					AlphaName( 2 ) = "AddInfiltrationFlow";
 					if ( !Contaminant.CO2Simulation ) Contaminant.SimulateContaminants = true;
 				} else if ( SELECT_CASE_var == "ADJUSTINFILTRATIONFLOW" ) {
-					ZoneAirMassFlow.InfiltrationTreatment = 2;
+					ZoneAirMassFlow.InfiltrationTreatment = AdjustInfiltrationFlow;
+					ZoneAirMassFlow.EnforceZoneMassBalance = true;
+					AlphaName( 2 ) = "AddInfiltrationFlow";
+					if ( !Contaminant.CO2Simulation ) Contaminant.SimulateContaminants = true;
+				} else if ( SELECT_CASE_var == "NONE" ) {
+					ZoneAirMassFlow.InfiltrationTreatment = NoInfiltrationFlow;
+					AlphaName( 2 ) = "None";
 				} else {
-					ZoneAirMassFlow.InfiltrationTreatment = 1;
-					AlphaName(2) = "ADDINFILTRATIONFLOW";
-					ShowWarningError( CurrentModuleObject + ": Invalid input of " + cAlphaFieldNames(2) + ". The default choice is assigned = NO" );
+					ZoneAirMassFlow.InfiltrationTreatment = AddInfiltrationFlow;
+					ZoneAirMassFlow.EnforceZoneMassBalance = true;
+					AlphaName( 2 ) = "AddInfiltrationFlow";
+					ShowWarningError( CurrentModuleObject + ": Invalid input of " + cAlphaFieldNames(2) + ". The default choice is assigned = AddInfiltrationFlow" );
 				}}
 			} else {
-				ZoneAirMassFlow.InfiltrationTreatment = 1;
-				AlphaName(2) = "ADDINFILTRATIONFLOW";
+				ZoneAirMassFlow.InfiltrationTreatment = AddInfiltrationFlow;
+				ZoneAirMassFlow.EnforceZoneMassBalance = true;
+				AlphaName( 2 ) = "AddInfiltrationFlow";
+			}
+			if ( ZoneAirMassFlow.InfiltrationTreatment == NoInfiltrationFlow ) {
+				AlphaName( 3 ) = "N/A";
+			} else {
+				if ( NumAlpha > 2 ) {
+						{ auto const SELECT_CASE_var( AlphaName( 3 ) );
+						if ( SELECT_CASE_var == "MIXINGSOURCEZONESONLY" ) {
+							ZoneAirMassFlow.InfiltrationZoneType = MixingSourceZonesOnly;
+							AlphaName( 3 ) = "MixingSourceZonesOnly";
+						} else if ( SELECT_CASE_var == "ALLZONES" ) {
+							ZoneAirMassFlow.InfiltrationZoneType = AllZones;
+							AlphaName( 3 ) = "AllZones";
+						} else {
+							ZoneAirMassFlow.InfiltrationZoneType = MixingSourceZonesOnly;
+							AlphaName( 3 ) = "MixingSourceZonesOnly";
+							ShowWarningError( CurrentModuleObject + ": Invalid input of " + cAlphaFieldNames( 3 ) + ". The default choice is assigned = MixingSourceZonesOnly" );
+						}}
+				} else {
+					ZoneAirMassFlow.InfiltrationZoneType = MixingSourceZonesOnly;
+					AlphaName( 3 ) = "MixingSourceZonesOnly";
+				}
 			}
 		} else {
 			ZoneAirMassFlow.EnforceZoneMassBalance = false;
-			AlphaName(1) = "NO";
 		}
-		//// allocate if the global variable ZoneAirMassFlow is ON
-		//if ( ZoneAirMassFlow.EnforceZoneMassBalance ) {
-		//	MassConservation.allocate( NumOfZones );
-		//}
 
 		gio::write( OutputFileInits, Format_732 );
 		if ( ZoneAirMassFlow.EnforceZoneMassBalance ) {
-			gio::write( OutputFileInits, Format_733 ) << "Yes";
+			gio::write( OutputFileInits, Format_733 ) << "Yes" << AlphaName( 1 ) << AlphaName( 2 ) << AlphaName( 3 );
 		} else {
-			gio::write( OutputFileInits, Format_733 ) << "No";
+			gio::write( OutputFileInits, Format_733 ) << "No" << "N/A" << "N/A" << "N/A";
 		}
 
 	}
@@ -1129,8 +1202,8 @@ namespace HeatBalanceManager {
 		int NumAlphas; // Number of elements in the alpha array
 		int NumNums; // Number of elements in the numeric array
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string AlphArray( 1 ); // Character string data
-		FArray1D< Real64 > NumArray( 3 ); // Numeric data
+		Array1D_string AlphArray( 1 ); // Character string data
+		Array1D< Real64 > NumArray( 3 ); // Numeric data
 
 		// Formats
 		static gio::Fmt Format_720( "('Environment:Site Atmospheric Variation',3(',',A))" );
@@ -1219,11 +1292,11 @@ namespace HeatBalanceManager {
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string MaterialNames( 5 ); // Number of Material Alpha names defined
+		Array1D_string MaterialNames( 5 ); // Number of Material Alpha names defined
 		int MaterNum; // Counter to keep track of the material number
 		int MaterialNumAlpha; // Number of material alpha names being passed
 		int MaterialNumProp; // Number of material properties being passed
-		FArray1D< Real64 > MaterialProps( 27 ); // Temporary array to transfer material properties
+		Array1D< Real64 > MaterialProps( 27 ); // Temporary array to transfer material properties
 		int RegMat; // Regular Materials -- full property definition
 		int RegRMat; // Regular Materials -- R only property definition
 		int AirMat; // Air space materias in opaque constructions
@@ -1311,7 +1384,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1390,7 +1463,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1456,7 +1529,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1485,7 +1558,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1540,7 +1613,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1582,7 +1655,7 @@ namespace HeatBalanceManager {
 
 			Material( MaterNum ).GlassSpectralDataPtr = 0;
 			if ( TotSpectralData > 0 && ! lAlphaFieldBlanks( 3 ) ) {
-				Material( MaterNum ).GlassSpectralDataPtr = FindItemInList( MaterialNames( 3 ), SpectralData.Name(), TotSpectralData );
+				Material( MaterNum ).GlassSpectralDataPtr = FindItemInList( MaterialNames( 3 ), SpectralData );
 			}
 			if ( SameString( MaterialNames( 2 ), "SpectralAverage" ) ) Material( MaterNum ).GlassSpectralDataPtr = 0;
 			// No need for spectral data for BSDF either
@@ -1752,7 +1825,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1828,7 +1901,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1905,7 +1978,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -1945,9 +2018,9 @@ namespace HeatBalanceManager {
 				Material( MaterNum ).GasWght( 1 ) = GasWght( GasType );
 				Material( MaterNum ).GasSpecHeatRatio( 1 ) = GasSpecificHeatRatio( GasType );
 				for ( ICoeff = 1; ICoeff <= 3; ++ICoeff ) {
-					Material( MaterNum ).GasCon( 1, ICoeff ) = GasCoeffsCon( GasType, ICoeff );
-					Material( MaterNum ).GasVis( 1, ICoeff ) = GasCoeffsVis( GasType, ICoeff );
-					Material( MaterNum ).GasCp( 1, ICoeff ) = GasCoeffsCp( GasType, ICoeff );
+					Material( MaterNum ).GasCon( ICoeff, 1 ) = GasCoeffsCon( ICoeff, GasType );
+					Material( MaterNum ).GasVis( ICoeff, 1 ) = GasCoeffsVis( ICoeff, GasType );
+					Material( MaterNum ).GasCp( ICoeff, 1 ) = GasCoeffsCp( ICoeff, GasType );
 				}
 			}
 
@@ -1955,9 +2028,9 @@ namespace HeatBalanceManager {
 
 			if ( GasType == 0 ) {
 				for ( ICoeff = 1; ICoeff <= 3; ++ICoeff ) {
-					Material( MaterNum ).GasCon( 1, ICoeff ) = MaterialProps( 1 + ICoeff );
-					Material( MaterNum ).GasVis( 1, ICoeff ) = MaterialProps( 4 + ICoeff );
-					Material( MaterNum ).GasCp( 1, ICoeff ) = MaterialProps( 7 + ICoeff );
+					Material( MaterNum ).GasCon( ICoeff, 1 ) = MaterialProps( 1 + ICoeff );
+					Material( MaterNum ).GasVis( ICoeff, 1 ) = MaterialProps( 4 + ICoeff );
+					Material( MaterNum ).GasCp( ICoeff, 1 ) = MaterialProps( 7 + ICoeff );
 				}
 				Material( MaterNum ).GasWght( 1 ) = MaterialProps( 11 );
 				Material( MaterNum ).GasSpecHeatRatio( 1 ) = MaterialProps( 12 );
@@ -1988,7 +2061,7 @@ namespace HeatBalanceManager {
 
 			// Nominal resistance of gap at room temperature
 			if ( ! ErrorsFound ) {
-				DenomRGas = ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 1, 2 ) * 300.0 + Material( MaterNum ).GasCon( 1, 3 ) * 90000.0 );
+				DenomRGas = ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 2, 1 ) * 300.0 + Material( MaterNum ).GasCon( 3, 1 ) * 90000.0 );
 				if ( DenomRGas > 0.0 ) {
 					NominalR( MaterNum ) = Material( MaterNum ).Thickness / DenomRGas;
 				} else {
@@ -2010,7 +2083,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2051,9 +2124,9 @@ namespace HeatBalanceManager {
 				Material( MaterNum ).GasWght( 1 ) = GasWght( GasType );
 				Material( MaterNum ).GasSpecHeatRatio( 1 ) = GasSpecificHeatRatio( GasType );
 				for ( ICoeff = 1; ICoeff <= 3; ++ICoeff ) {
-					Material( MaterNum ).GasCon( 1, ICoeff ) = GasCoeffsCon( GasType, ICoeff );
-					Material( MaterNum ).GasVis( 1, ICoeff ) = GasCoeffsVis( GasType, ICoeff );
-					Material( MaterNum ).GasCp( 1, ICoeff ) = GasCoeffsCp( GasType, ICoeff );
+					Material( MaterNum ).GasCon( ICoeff, 1 ) = GasCoeffsCon( ICoeff, GasType );
+					Material( MaterNum ).GasVis( ICoeff, 1 ) = GasCoeffsVis( ICoeff, GasType );
+					Material( MaterNum ).GasCp( ICoeff, 1 ) = GasCoeffsCp( ICoeff, GasType );
 				}
 			}
 
@@ -2075,9 +2148,9 @@ namespace HeatBalanceManager {
 
 			if ( GasType == 0 ) {
 				for ( ICoeff = 1; ICoeff <= 3; ++ICoeff ) {
-					Material( MaterNum ).GasCon( 1, ICoeff ) = MaterialProps( 1 + ICoeff );
-					Material( MaterNum ).GasVis( 1, ICoeff ) = MaterialProps( 4 + ICoeff );
-					Material( MaterNum ).GasCp( 1, ICoeff ) = MaterialProps( 7 + ICoeff );
+					Material( MaterNum ).GasCon( ICoeff, 1 ) = MaterialProps( 1 + ICoeff );
+					Material( MaterNum ).GasVis( ICoeff, 1 ) = MaterialProps( 4 + ICoeff );
+					Material( MaterNum ).GasCp( ICoeff, 1 ) = MaterialProps( 7 + ICoeff );
 				}
 				Material( MaterNum ).GasWght( 1 ) = MaterialProps( 11 );
 				Material( MaterNum ).GasSpecHeatRatio( 1 ) = MaterialProps( 12 );
@@ -2102,7 +2175,7 @@ namespace HeatBalanceManager {
 
 			// Nominal resistance of gap at room temperature
 			if ( ! ErrorsFound ) {
-				DenomRGas = ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 1, 2 ) * 300.0 + Material( MaterNum ).GasCon( 1, 3 ) * 90000.0 );
+				DenomRGas = ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 2, 1 ) * 300.0 + Material( MaterNum ).GasCon( 3, 1 ) * 90000.0 );
 				if ( DenomRGas > 0.0 ) {
 					NominalR( MaterNum ) = Material( MaterNum ).Thickness / DenomRGas;
 				} else {
@@ -2124,7 +2197,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2169,15 +2242,15 @@ namespace HeatBalanceManager {
 					Material( MaterNum ).GasSpecHeatRatio( NumGas ) = GasSpecificHeatRatio( GasType );
 					Material( MaterNum ).GasFract( NumGas ) = MaterialProps( 2 + NumGas );
 					for ( ICoeff = 1; ICoeff <= 3; ++ICoeff ) {
-						Material( MaterNum ).GasCon( NumGas, ICoeff ) = GasCoeffsCon( GasType, ICoeff );
-						Material( MaterNum ).GasVis( NumGas, ICoeff ) = GasCoeffsVis( GasType, ICoeff );
-						Material( MaterNum ).GasCp( NumGas, ICoeff ) = GasCoeffsCp( GasType, ICoeff );
+						Material( MaterNum ).GasCon( ICoeff, NumGas ) = GasCoeffsCon( ICoeff, GasType );
+						Material( MaterNum ).GasVis( ICoeff, NumGas ) = GasCoeffsVis( ICoeff, GasType );
+						Material( MaterNum ).GasCp( ICoeff, NumGas ) = GasCoeffsCp( ICoeff, GasType );
 					}
 				}
 			}
 
 			// Nominal resistance of gap at room temperature (based on first gas in mixture)
-			NominalR( MaterNum ) = Material( MaterNum ).Thickness / ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 1, 2 ) * 300.0 + Material( MaterNum ).GasCon( 1, 3 ) * 90000.0 );
+			NominalR( MaterNum ) = Material( MaterNum ).Thickness / ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 2, 1 ) * 300.0 + Material( MaterNum ).GasCon( 3, 1 ) * 90000.0 );
 
 		}
 
@@ -2191,7 +2264,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2262,7 +2335,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2334,7 +2407,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2405,7 +2478,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2565,7 +2638,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2689,7 +2762,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -2937,7 +3010,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -3076,7 +3149,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( MaterialNames( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( MaterialNames( 1 ), Material, MaterNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -3149,7 +3222,7 @@ namespace HeatBalanceManager {
 				IsBlank = false;
 
 				// Verify unique names
-				VerifyName( cAlphaArgs( 1 ), TCGlazings.Name(), Loop - 1, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), TCGlazings, Loop - 1, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 				if ( ErrorInName ) {
 					ShowContinueError( "...All Thermochromic Glazing names must be unique regardless of subtype." );
 					ErrorsFound = true;
@@ -3179,7 +3252,7 @@ namespace HeatBalanceManager {
 					TCGlazings( Loop ).LayerName( iTC ) = cAlphaArgs( 1 + iTC );
 
 					// Find this glazing material in the material list
-					iMat = FindItemInList( cAlphaArgs( 1 + iTC ), Material.Name(), TotMaterials );
+					iMat = FindItemInList( cAlphaArgs( 1 + iTC ), Material );
 					if ( iMat != 0 ) {
 						//TC glazing
 						Material( iMat ).SpecTemp = rNumericArgs( iTC );
@@ -3208,7 +3281,7 @@ namespace HeatBalanceManager {
 			GetObjectItem( cCurrentModuleObject, Loop, cAlphaArgs, MaterialNumAlpha, rNumericArgs, MaterialNumProp, IOStat, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), Material.Name(), MaterNum, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), Material, MaterNum, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ShowContinueError( "...All Material names must be unique regardless of subtype." );
 				ErrorsFound = true;
@@ -3309,10 +3382,10 @@ namespace HeatBalanceManager {
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string SpecDataNames( 1 ); // Spectral data alpha names
+		Array1D_string SpecDataNames( 1 ); // Spectral data alpha names
 		int SpecDataNumAlpha; // Number of spectral data alpha names being passed
 		int SpecDataNumProp; // Number of spectral data properties being passed
-		FArray1D< Real64 > SpecDataProps; // Temporary array to transfer spectal data properties
+		Array1D< Real64 > SpecDataProps; // Temporary array to transfer spectal data properties
 		int Loop;
 		bool ErrorInName;
 		bool IsBlank;
@@ -3338,7 +3411,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( SpecDataNames( 1 ), SpectralData.Name(), Loop, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( SpecDataNames( 1 ), SpectralData, Loop, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -3531,8 +3604,8 @@ namespace HeatBalanceManager {
 		int ConstructNumAlpha; // Number of construction alpha names being passed
 		int DummyNumProp; // dummy variable for properties being passed
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string ConstructAlphas( {0,MaxLayersInConstruct} ); // Construction Alpha names defined
-		FArray1D< Real64 > DummyProps( 4 ); // Temporary array to transfer construction properties
+		Array1D_string ConstructAlphas( {0,MaxLayersInConstruct} ); // Construction Alpha names defined
+		Array1D< Real64 > DummyProps( 4 ); // Temporary array to transfer construction properties
 		bool ErrorInName;
 		bool IsBlank;
 		int Loop;
@@ -3547,9 +3620,10 @@ namespace HeatBalanceManager {
 		//  Window5 data file
 		bool EOFonW5File; // True if EOF encountered reading Window5 data file
 		static bool NoRegularMaterialsUsed( true );
+		int MaterialLayerGroup; // window contruction layer material group index
 
 		int iMatGlass; // number of glass layers
-		FArray1D_string WConstructNames;
+		Array1D_string WConstructNames;
 
 		// FLOW:
 
@@ -3598,7 +3672,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( ConstructAlphas( 0 ), Construct.Name(), ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( ConstructAlphas( 0 ), Construct, ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -3620,16 +3694,22 @@ namespace HeatBalanceManager {
 
 				//Find the material in the list of materials
 
-				Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material.Name(), TotMaterials );
+				Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material );
 
 				// count number of glass layers
 				if ( Construct( ConstrNum ).LayerPoint( Layer ) > 0 ) {
 					if ( Material( Construct( ConstrNum ).LayerPoint( Layer ) ).Group == WindowGlass ) ++iMatGlass;
+					MaterialLayerGroup = Material( Construct( ConstrNum ).LayerPoint( Layer ) ).Group;
+					if ( ( MaterialLayerGroup == GlassEquivalentLayer ) || ( MaterialLayerGroup == ShadeEquivalentLayer ) || ( MaterialLayerGroup == DrapeEquivalentLayer ) || ( MaterialLayerGroup == BlindEquivalentLayer ) || ( MaterialLayerGroup == ScreenEquivalentLayer ) || ( MaterialLayerGroup == GapEquivalentLayer ) ) {
+						ShowSevereError( "Invalid material layer type in window " + CurrentModuleObject + " = " + Construct( ConstrNum ).Name );
+						ShowSevereError( "Equivalent Layer material type = " + ConstructAlphas( Layer ) + " is allowed only in Construction:WindowEquivalentLayer window object." );
+						ErrorsFound = true;
+					}
 				}
 
 				if ( Construct( ConstrNum ).LayerPoint( Layer ) == 0 ) {
 					//This may be a TC GlazingGroup
-					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), TCGlazings.Name(), TotTCGlazings );
+					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), TCGlazings );
 
 					if ( Construct( ConstrNum ).LayerPoint( Layer ) > 0 ) {
 						//reset layer pointer to the first glazing in the TC GlazingGroup
@@ -3688,7 +3768,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( ConstructAlphas( 0 ), Construct.Name(), TotRegConstructs + ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( ConstructAlphas( 0 ), Construct, TotRegConstructs + ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -3737,7 +3817,7 @@ namespace HeatBalanceManager {
 
 				//Find the material in the list of materials
 
-				Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material.Name(), TotMaterials );
+				Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material );
 
 				if ( Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) == 0 ) {
 					ShowSevereError( "Did not find matching material for " + CurrentModuleObject + ' ' + Construct( ConstrNum ).Name + ", missing material = " + ConstructAlphas( Layer ) );
@@ -3771,7 +3851,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( ConstructAlphas( 0 ), Construct.Name(), TotRegConstructs + ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( ConstructAlphas( 0 ), Construct, TotRegConstructs + ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -3793,7 +3873,7 @@ namespace HeatBalanceManager {
 			for ( Layer = 1; Layer <= ConstructNumAlpha - 1; ++Layer ) {
 
 				//Find the material in the list of materials
-				Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material.Name(), TotMaterials );
+				Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) = FindItemInList( ConstructAlphas( Layer ), Material );
 
 				if ( Construct( TotRegConstructs + ConstrNum ).LayerPoint( Layer ) == 0 ) {
 					ShowSevereError( "Did not find matching material for " + CurrentModuleObject + ' ' + Construct( ConstrNum ).Name + ", missing material = " + ConstructAlphas( Layer ) );
@@ -4004,21 +4084,21 @@ namespace HeatBalanceManager {
 
 			rNumericArgs = 0.0; // Zero out just in case
 			GetObjectItem( cCurrentModuleObject, Loop, cAlphaArgs, NumAlphas, rNumericArgs, NumNumbers, IOStatus, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
-			TMP = index( cAlphaArgs( 1 ), CHAR( 1 ) );
+			TMP = index( cAlphaArgs( 1 ), char( 1 ) );
 			while ( TMP != std::string::npos ) {
 				cAlphaArgs( 1 )[ TMP ] = ',';
-				TMP = index( cAlphaArgs( 1 ), CHAR( 1 ) );
+				TMP = index( cAlphaArgs( 1 ), char( 1 ) );
 			}
-			TMP = index( cAlphaArgs( 1 ), CHAR( 2 ) );
+			TMP = index( cAlphaArgs( 1 ), char( 2 ) );
 			while ( TMP != std::string::npos ) {
 				cAlphaArgs( 1 )[ TMP ] = '!';
-				TMP = index( cAlphaArgs( 1 ), CHAR( 2 ) );
+				TMP = index( cAlphaArgs( 1 ), char( 2 ) );
 			}
 
 			//    Make sure Zone Name is unique
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), Zone.Name(), ZoneLoop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), Zone, ZoneLoop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -4053,14 +4133,14 @@ namespace HeatBalanceManager {
 				// List name
 				ErrorInName = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), ZoneList.Name(), ListNum - 1, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), ZoneList, ListNum - 1, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 
 				if ( ErrorInName ) {
 					ErrorsFound = true;
 				}
 
 				ZoneList( ListNum ).Name = cAlphaArgs( 1 );
-				if ( FindItemInList( ZoneList( ListNum ).Name, Zone.Name(), NumOfZones ) > 0 ) {
+				if ( FindItemInList( ZoneList( ListNum ).Name, Zone ) > 0 ) {
 					ShowWarningError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + "\":  is a duplicate of a zone name." );
 					ShowContinueError( "This could be a problem in places where either a Zone Name or a Zone List can be used." );
 				}
@@ -4078,7 +4158,7 @@ namespace HeatBalanceManager {
 					for ( ZoneNum = 1; ZoneNum <= ZoneList( ListNum ).NumOfZones; ++ZoneNum ) {
 						ZoneName = cAlphaArgs( ZoneNum + 1 );
 						ZoneList( ListNum ).MaxZoneNameLength = max( ZoneList( ListNum ).MaxZoneNameLength, len( ZoneName ) );
-						ZoneList( ListNum ).Zone( ZoneNum ) = FindItemInList( ZoneName, Zone.Name(), NumOfZones );
+						ZoneList( ListNum ).Zone( ZoneNum ) = FindItemInList( ZoneName, Zone );
 						if ( ZoneList( ListNum ).Zone( ZoneNum ) == 0 ) {
 							ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + "\":  " + cAlphaFieldNames( ZoneNum + 1 ) + ' ' + ZoneName + " not found." );
 							ErrorsFound = true;
@@ -4110,7 +4190,7 @@ namespace HeatBalanceManager {
 				// Group name
 				ErrorInName = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), ZoneGroup.Name(), GroupNum - 1, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), ZoneGroup, GroupNum - 1, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 
 				if ( ErrorInName ) {
 					ErrorsFound = true;
@@ -4122,7 +4202,7 @@ namespace HeatBalanceManager {
 				ZoneGroup( GroupNum ).Multiplier = rNumericArgs( 1 );
 
 				// Zone list
-				ListNum = FindItemInList( cAlphaArgs( 2 ), ZoneList.Name(), NumOfZoneLists );
+				ListNum = FindItemInList( cAlphaArgs( 2 ), ZoneList );
 				ZoneGroup( GroupNum ).ZoneList = ListNum;
 
 				if ( ListNum == 0 ) {
@@ -4167,14 +4247,14 @@ namespace HeatBalanceManager {
 	ProcessZoneData(
 		std::string const & cCurrentModuleObject,
 		int const ZoneLoop,
-		FArray1_string const & cAlphaArgs,
+		Array1_string const & cAlphaArgs,
 		int & NumAlphas,
-		FArray1< Real64 > const & rNumericArgs,
+		Array1< Real64 > const & rNumericArgs,
 		int & NumNumbers,
-		FArray1_bool const & lNumericFieldBlanks, //Unused
-		FArray1_bool const & lAlphaFieldBlanks,
-		FArray1_string const & cAlphaFieldNames,
-		FArray1_string const & cNumericFieldNames, //Unused
+		Array1_bool const & EP_UNUSED( lNumericFieldBlanks ), //Unused
+		Array1_bool const & lAlphaFieldBlanks,
+		Array1_string const & cAlphaFieldNames,
+		Array1_string const & EP_UNUSED( cNumericFieldNames ), //Unused
 		bool & ErrorsFound // If errors found in input
 	)
 	{
@@ -4379,7 +4459,6 @@ namespace HeatBalanceManager {
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		int StormWinNum; // Number of StormWindow object
 		int SurfNum; // Surface number
-		int Num; // Loop counter
 		static bool ChangeSet( true ); // Toggle for checking storm windows
 
 		// FLOW:
@@ -4529,7 +4608,6 @@ namespace HeatBalanceManager {
 		MCPTM.dimension( NumOfZones, 0.0 );
 		MixingMassFlowZone.dimension( NumOfZones, 0.0 );
 		MixingMassFlowXHumRat.dimension( NumOfZones, 0.0 );
-		ZoneMassBalanceRepVarFlag.dimension( NumOfZones, true );
 		ZoneReOrder.allocate( NumOfZones );
 		ZoneMassBalanceFlag.dimension( NumOfZones, false );
 		ZoneInfiltrationFlag.dimension( NumOfZones, false );
@@ -4588,9 +4666,9 @@ namespace HeatBalanceManager {
 		WarmupLoadDiff.dimension( NumOfZones, 0.0 );
 		TempZone.dimension( NumOfZones, 0.0 );
 		LoadZone.dimension( NumOfZones, 0.0 );
-		TempZoneRpt.dimension( NumOfTimeStepInHour * 24, NumOfZones, 0.0 );
-		LoadZoneRpt.dimension( NumOfTimeStepInHour * 24, NumOfZones, 0.0 );
-		MaxLoadZoneRpt.dimension( NumOfTimeStepInHour * 24, NumOfZones, 0.0 );
+		TempZoneRpt.dimension( NumOfZones, NumOfTimeStepInHour * 24, 0.0 );
+		LoadZoneRpt.dimension( NumOfZones, NumOfTimeStepInHour * 24, 0.0 );
+		MaxLoadZoneRpt.dimension( NumOfZones, NumOfTimeStepInHour * 24, 0.0 );
 		WarmupConvergenceValues.allocate( NumOfZones );
 		TempZoneRptStdDev.allocate( NumOfTimeStepInHour * 24 );
 		LoadZoneRptStdDev.allocate( NumOfTimeStepInHour * 24 );
@@ -4683,9 +4761,9 @@ namespace HeatBalanceManager {
 				WarmupTempDiff( ZoneNum ) = std::abs( TempZoneSecPrevDay( ZoneNum ) - TempZonePrevDay( ZoneNum ) );
 				WarmupLoadDiff( ZoneNum ) = std::abs( LoadZoneSecPrevDay( ZoneNum ) - LoadZonePrevDay( ZoneNum ) );
 				if ( ZoneNum == 1 ) ++CountWarmupDayPoints;
-				TempZoneRpt( CountWarmupDayPoints, ZoneNum ) = WarmupTempDiff( ZoneNum );
-				LoadZoneRpt( CountWarmupDayPoints, ZoneNum ) = WarmupLoadDiff( ZoneNum );
-				MaxLoadZoneRpt( CountWarmupDayPoints, ZoneNum ) = LoadZone( ZoneNum );
+				TempZoneRpt( ZoneNum, CountWarmupDayPoints ) = WarmupTempDiff( ZoneNum );
+				LoadZoneRpt( ZoneNum, CountWarmupDayPoints ) = WarmupLoadDiff( ZoneNum );
+				MaxLoadZoneRpt( ZoneNum, CountWarmupDayPoints ) = LoadZone( ZoneNum );
 
 				if ( ReportDetailedWarmupConvergence ) { // only do this detailed thing when requested by user is on
 					// Write Warmup Convergence Information to the initialization output file
@@ -4941,20 +5019,20 @@ namespace HeatBalanceManager {
 			}
 
 			for ( ZoneNum = 1; ZoneNum <= NumOfZones; ++ZoneNum ) {
-				AverageZoneTemp = sum( TempZoneRpt( {1,CountWarmupDayPoints}, ZoneNum ) ) / double( CountWarmupDayPoints );
+				AverageZoneTemp = sum( TempZoneRpt( ZoneNum, {1,CountWarmupDayPoints} ) ) / double( CountWarmupDayPoints );
 				for ( Num = 1; Num <= CountWarmupDayPoints; ++Num ) {
-					if ( MaxLoadZoneRpt( Num, ZoneNum ) > 1.e-4 ) {
-						LoadZoneRpt( Num, ZoneNum ) /= MaxLoadZoneRpt( Num, ZoneNum );
+					if ( MaxLoadZoneRpt( ZoneNum, Num ) > 1.e-4 ) {
+						LoadZoneRpt( ZoneNum, Num ) /= MaxLoadZoneRpt( ZoneNum, Num );
 					} else {
-						LoadZoneRpt( Num, ZoneNum ) = 0.0;
+						LoadZoneRpt( ZoneNum, Num ) = 0.0;
 					}
 				}
-				AverageZoneLoad = sum( LoadZoneRpt( {1,CountWarmupDayPoints}, ZoneNum ) ) / double( CountWarmupDayPoints );
+				AverageZoneLoad = sum( LoadZoneRpt( ZoneNum, {1,CountWarmupDayPoints} ) ) / double( CountWarmupDayPoints );
 				StdDevZoneTemp = 0.0;
 				StdDevZoneLoad = 0.0;
 				for ( Num = 1; Num <= CountWarmupDayPoints; ++Num ) {
-					TempZoneRptStdDev( Num ) = pow_2( TempZoneRpt( Num, ZoneNum ) - AverageZoneTemp );
-					LoadZoneRptStdDev( Num ) = pow_2( LoadZoneRpt( Num, ZoneNum ) - AverageZoneLoad );
+					TempZoneRptStdDev( Num ) = pow_2( TempZoneRpt( ZoneNum, Num ) - AverageZoneTemp );
+					LoadZoneRptStdDev( Num ) = pow_2( LoadZoneRpt( ZoneNum, Num ) - AverageZoneLoad );
 				}
 				StdDevZoneTemp = std::sqrt( sum( TempZoneRptStdDev( {1,CountWarmupDayPoints} ) ) / double( CountWarmupDayPoints ) );
 				StdDevZoneLoad = std::sqrt( sum( LoadZoneRptStdDev( {1,CountWarmupDayPoints} ) ) / double( CountWarmupDayPoints ) );
@@ -5000,6 +5078,8 @@ namespace HeatBalanceManager {
 		using DataSystemVariables::ReportDuringWarmup; // added for FMI
 		using DataSystemVariables::UpdateDataDuringWarmupExternalInterface;
 		using namespace DataReportingFlags;
+		using DataGlobals::KindOfSim;
+		using DataGlobals::ksHVACSizeDesignDay;
 
 		// Locals
 		// SUBROUTINE ARGUMENT DEFINITIONS:
@@ -5023,9 +5103,13 @@ namespace HeatBalanceManager {
 		// Time step level reporting:
 
 		ReportScheduleValues();
-		if ( ! WarmupFlag && DoOutputReporting ) {
+		if ( !WarmupFlag && DoOutputReporting ) {
 			CalcMoreNodeInfo();
 			UpdateDataandReport( ZoneTSReporting );
+			if ( KindOfSim == ksHVACSizeDesignDay || KindOfSim == ksHVACSizeRunPeriodDesign ) {
+				if ( hvacSizingSimulationManager ) hvacSizingSimulationManager->UpdateSizingLogsZoneStep();
+			}
+
 			UpdateTabularReports( ZoneTSReporting );
 			UpdateUtilityBills();
 		} else if ( ! KickOffSimulation && DoOutputReporting && ReportDuringWarmup ) {
@@ -5048,8 +5132,15 @@ namespace HeatBalanceManager {
 			}
 			CalcMoreNodeInfo();
 			UpdateDataandReport( ZoneTSReporting );
+			if ( KindOfSim == ksHVACSizeDesignDay || KindOfSim == ksHVACSizeRunPeriodDesign ) {
+				if ( hvacSizingSimulationManager ) hvacSizingSimulationManager->UpdateSizingLogsZoneStep();
+			}
+
 		} else if ( UpdateDataDuringWarmupExternalInterface ) { // added for FMI
 			UpdateDataandReport( ZoneTSReporting );
+			if ( KindOfSim == ksHVACSizeDesignDay || KindOfSim == ksHVACSizeRunPeriodDesign ) {
+				if ( hvacSizingSimulationManager ) hvacSizingSimulationManager->UpdateSizingLogsZoneStep();
+			}
 		}
 		// There is no hourly reporting in the heat balance.
 
@@ -5102,11 +5193,11 @@ namespace HeatBalanceManager {
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string FrameDividerNames( 2 ); // Frame/Divider Alpha names
+		Array1D_string FrameDividerNames( 2 ); // Frame/Divider Alpha names
 		int FrameDividerNum; // Counter to keep track of the frame/divider number
 		int FrameDividerNumAlpha; // Number of frame/divider alpha names being passed
 		int FrameDividerNumProp; // Number of frame/divider properties being passed
-		FArray1D< Real64 > FrameDividerProps( 23 ); // Temporary array to transfer frame/divider properties
+		Array1D< Real64 > FrameDividerProps( 23 ); // Temporary array to transfer frame/divider properties
 		int Loop;
 		bool ErrorInName;
 		bool IsBlank;
@@ -5125,7 +5216,7 @@ namespace HeatBalanceManager {
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( FrameDividerNames( 1 ), FrameDivider.Name(), FrameDividerNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( FrameDividerNames( 1 ), FrameDivider, FrameDividerNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -5253,7 +5344,6 @@ namespace HeatBalanceManager {
 		using namespace DataStringGlobals;
 		using General::POLYF; // POLYF       ! Polynomial in cosine of angle of incidence
 		using General::TrimSigDigits;
-		using DataSystemVariables::iASCII_CR;
 		using DataSystemVariables::iUnicode_end;
 		using DataSystemVariables::GoodIOStatValue;
 		using DataSystemVariables::TempFullFileName;
@@ -5263,7 +5353,7 @@ namespace HeatBalanceManager {
 		// SUBROUTINE ARGUMENT DEFINITIONS:
 
 		// SUBROUTINE PARAMETER DEFINITIONS:
-		static FArray1D_string const NumName( 5, { "1", "2", "3", "4", "5" } );
+		static Array1D_string const NumName( 5, { "1", "2", "3", "4", "5" } );
 
 		// INTERFACE BLOCK SPECIFICATIONS:
 		// na
@@ -5274,22 +5364,22 @@ namespace HeatBalanceManager {
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
 		static int W5DataFileNum;
 		int FileLineCount; // counter for number of lines read (used in some error messages)
-		FArray1D_string DataLine( 100 ); // Array of data lines
+		Array1D_string DataLine( 100 ); // Array of data lines
 		std::string NextLine; // Line of data
 		std::string WindowNameInW5DataFile;
 		std::string W5Name;
-		FArray1D_string GasName( 3 ); // Gas name from data file
+		Array1D_string GasName( 3 ); // Gas name from data file
 		std::string LayerName; // Layer name from data file
 		std::string MullionOrientation; // Horizontal, vertical or none
 		int LineNum;
 		int ReadStat; // File read status
-		FArray1D_int NGlass( 2 ); // Number of glass layers in glazing system
-		FArray2D_int NumGases( 2, 4 ); // Number of gases in each gap of a glazing system
-		FArray2D_int MaterNumSysGlass( 2, 5 ); // Material numbers for glazing system / glass combinations
-		FArray2D_int MaterNumSysGap( 2, 4 ); // Material numbers for glazing system / gap combinations
+		Array1D_int NGlass( 2 ); // Number of glass layers in glazing system
+		Array2D_int NumGases( 4, 2 ); // Number of gases in each gap of a glazing system
+		Array2D_int MaterNumSysGlass( 5, 2 ); // Material numbers for glazing system / glass combinations
+		Array2D_int MaterNumSysGap( 4, 2 ); // Material numbers for glazing system / gap combinations
 		int TotMaterialsPrev; // Number of materials before adding ones from W5DataFile
 		int TotFrameDividerPrev; // Number of FrameAndDivider objects before adding ones from W5DataFile
-		FArray1D_int NGaps( 2 ); // Number of gaps in window construction
+		Array1D_int NGaps( 2 ); // Number of gaps in window construction
 		int NGlSys; // Number of glazing systems (normally 1, but 2 for mullioned window
 		//  with two different glazing systems
 		int loop; // DO loop counter
@@ -5304,28 +5394,28 @@ namespace HeatBalanceManager {
 		int MatNum;
 		int FrDivNum; // FrameDivider number
 		bool exists; // True if Window5 data file exists
-		FArray1D< Real64 > WinHeight( 2 ); // Height, width for glazing system (m)
-		FArray1D< Real64 > WinWidth( 2 );
-		FArray1D< Real64 > UValCenter( 2 ); // Center of glass U-value (W/m2-K) for glazing system
-		FArray1D< Real64 > SCCenter( 2 ); // Center of glass shading coefficient for glazing system
-		FArray1D< Real64 > SHGCCenter( 2 ); // Center of glass solar heat gain coefficient for glazing system
-		FArray1D< Real64 > TVisCenter( 2 ); // Center of glass visible transmittance for glazing system
-		FArray1D< Real64 > Tsol( 11 ); // Solar transmittance vs incidence angle; diffuse trans.
-		FArray2D< Real64 > AbsSol( 5, 11 ); // Solar absorptance vs inc. angle in each glass layer
-		FArray1D< Real64 > Rfsol( 11 ); // Front solar reflectance vs inc. angle
-		FArray1D< Real64 > Rbsol( 11 ); // Back solar reflectance vs inc. angle
-		FArray1D< Real64 > Tvis( 11 ); // Visible transmittance vs inc. angle
-		FArray1D< Real64 > Rfvis( 11 ); // Front visible reflectance vs inc. angle
-		FArray1D< Real64 > Rbvis( 11 ); // Back visible reflectance vs inc. angle
-		FArray1D< Real64 > CosPhiIndepVar( 10 ); // Cosine of incidence angle from 0 to 90 deg in 10 deg increments
+		Array1D< Real64 > WinHeight( 2 ); // Height, width for glazing system (m)
+		Array1D< Real64 > WinWidth( 2 );
+		Array1D< Real64 > UValCenter( 2 ); // Center of glass U-value (W/m2-K) for glazing system
+		Array1D< Real64 > SCCenter( 2 ); // Center of glass shading coefficient for glazing system
+		Array1D< Real64 > SHGCCenter( 2 ); // Center of glass solar heat gain coefficient for glazing system
+		Array1D< Real64 > TVisCenter( 2 ); // Center of glass visible transmittance for glazing system
+		Array1D< Real64 > Tsol( 11 ); // Solar transmittance vs incidence angle; diffuse trans.
+		Array2D< Real64 > AbsSol( 11, 5 ); // Solar absorptance vs inc. angle in each glass layer
+		Array1D< Real64 > Rfsol( 11 ); // Front solar reflectance vs inc. angle
+		Array1D< Real64 > Rbsol( 11 ); // Back solar reflectance vs inc. angle
+		Array1D< Real64 > Tvis( 11 ); // Visible transmittance vs inc. angle
+		Array1D< Real64 > Rfvis( 11 ); // Front visible reflectance vs inc. angle
+		Array1D< Real64 > Rbvis( 11 ); // Back visible reflectance vs inc. angle
+		Array1D< Real64 > CosPhiIndepVar( 10 ); // Cosine of incidence angle from 0 to 90 deg in 10 deg increments
 		int IPhi; // Incidence angle counter
 		Real64 Phi; // Incidence angle (deg)
 		Real64 CosPhi; // Cosine of incidence angle
-		FArray1D< Real64 > tsolFit( 10 ); // Fitted solar transmittance vs incidence angle
-		FArray1D< Real64 > tvisFit( 10 ); // Fitted visible transmittance vs incidence angle
-		FArray1D< Real64 > rfsolFit( 10 ); // Fitted solar front reflectance vs incidence angle
-		FArray2D< Real64 > solabsFit( 10, 5 ); // Fitted solar absorptance vs incidence angle for each glass layer
-		FArray1D_string DividerType( 2 ); // Divider type: DividedLite or Suspended
+		Array1D< Real64 > tsolFit( 10 ); // Fitted solar transmittance vs incidence angle
+		Array1D< Real64 > tvisFit( 10 ); // Fitted visible transmittance vs incidence angle
+		Array1D< Real64 > rfsolFit( 10 ); // Fitted solar front reflectance vs incidence angle
+		Array2D< Real64 > solabsFit( 5, 10 ); // Fitted solar absorptance vs incidence angle for each glass layer
+		Array1D_string DividerType( 2 ); // Divider type: DividedLite or Suspended
 		Real64 FrameWidth;
 		Real64 MullionWidth;
 		Real64 FrameProjectionOut;
@@ -5335,16 +5425,16 @@ namespace HeatBalanceManager {
 		Real64 FrameSolAbsorp;
 		Real64 FrameVisAbsorp;
 		Real64 FrameEmis;
-		FArray1D_int HorDividers( 2 ); // For divider: number horizontal for each glazing system
-		FArray1D_int VertDividers( 2 ); // For divider: number vertical for each glazing system
-		FArray1D< Real64 > DividerWidth( 2 );
-		FArray1D< Real64 > DividerProjectionOut( 2 );
-		FArray1D< Real64 > DividerProjectionIn( 2 );
-		FArray1D< Real64 > DividerConductance( 2 );
-		FArray1D< Real64 > DivEdgeToCenterGlCondRatio( 2 );
-		FArray1D< Real64 > DividerSolAbsorp( 2 );
-		FArray1D< Real64 > DividerVisAbsorp( 2 );
-		FArray1D< Real64 > DividerEmis( 2 );
+		Array1D_int HorDividers( 2 ); // For divider: number horizontal for each glazing system
+		Array1D_int VertDividers( 2 ); // For divider: number vertical for each glazing system
+		Array1D< Real64 > DividerWidth( 2 );
+		Array1D< Real64 > DividerProjectionOut( 2 );
+		Array1D< Real64 > DividerProjectionIn( 2 );
+		Array1D< Real64 > DividerConductance( 2 );
+		Array1D< Real64 > DivEdgeToCenterGlCondRatio( 2 );
+		Array1D< Real64 > DividerSolAbsorp( 2 );
+		Array1D< Real64 > DividerVisAbsorp( 2 );
+		Array1D< Real64 > DividerEmis( 2 );
 		std::string::size_type endcol;
 
 		// Object Data
@@ -5665,7 +5755,7 @@ Label20: ;
 			for ( IGlSys = 1; IGlSys <= NGlSys; ++IGlSys ) {
 				for ( IGlass = 1; IGlass <= NGlass( IGlSys ); ++IGlass ) {
 					++MaterNum;
-					MaterNumSysGlass( IGlSys, IGlass ) = MaterNum;
+					MaterNumSysGlass( IGlass, IGlSys ) = MaterNum;
 					Material( MaterNum ).Group = WindowGlass;
 					{ IOFlags flags; gio::read( W5DataFileNum, fmtA, flags ) >> NextLine; ReadStat = flags.ios(); }
 					++FileLineCount;
@@ -5696,10 +5786,10 @@ Label20: ;
 			for ( IGlSys = 1; IGlSys <= NGlSys; ++IGlSys ) {
 				for ( IGap = 1; IGap <= NGaps( IGlSys ); ++IGap ) {
 					++MaterNum;
-					MaterNumSysGap( IGlSys, IGap ) = MaterNum;
+					MaterNumSysGap( IGap, IGlSys ) = MaterNum;
 					{ IOFlags flags; gio::read( W5DataFileNum, fmtA, flags ) >> NextLine; ReadStat = flags.ios(); }
 					++FileLineCount;
-					gio::read( NextLine.substr( 23 ), "*" ) >> Material( MaterNum ).Thickness >> NumGases( IGlSys, IGap );
+					gio::read( NextLine.substr( 23 ), "*" ) >> Material( MaterNum ).Thickness >> NumGases( IGap, IGlSys );
 					if ( NGlSys == 1 ) {
 						Material( MaterNum ).Name = "W5:" + DesiredConstructionName + ":GAP" + NumName( IGap );
 					} else {
@@ -5715,16 +5805,16 @@ Label20: ;
 			++FileLineCount;
 			for ( IGlSys = 1; IGlSys <= NGlSys; ++IGlSys ) {
 				for ( IGap = 1; IGap <= NGaps( IGlSys ); ++IGap ) {
-					MaterNum = MaterNumSysGap( IGlSys, IGap );
-					Material( MaterNum ).NumberOfGasesInMixture = NumGases( IGlSys, IGap );
+					MaterNum = MaterNumSysGap( IGap, IGlSys );
+					Material( MaterNum ).NumberOfGasesInMixture = NumGases( IGap, IGlSys );
 					Material( MaterNum ).Group = WindowGas;
-					if ( NumGases( IGlSys, IGap ) > 1 ) Material( MaterNum ).Group = WindowGasMixture;
-					for ( IGas = 1; IGas <= NumGases( IGlSys, IGap ); ++IGas ) {
+					if ( NumGases( IGap, IGlSys ) > 1 ) Material( MaterNum ).Group = WindowGasMixture;
+					for ( IGas = 1; IGas <= NumGases( IGap, IGlSys ); ++IGas ) {
 						{ IOFlags flags; gio::read( W5DataFileNum, fmtA, flags ) >> NextLine; ReadStat = flags.ios(); }
 						++FileLineCount;
-						gio::read( NextLine.substr( 19 ), "*" ) >> GasName( IGas ) >> Material( MaterNum ).GasFract( IGas ) >> Material( MaterNum ).GasWght( IGas ) >> Material( MaterNum ).GasCon( IGas, _ ) >> Material( MaterNum ).GasVis( IGas, _ ) >> Material( MaterNum ).GasCp( IGas, _ );
+						gio::read( NextLine.substr( 19 ), "*" ) >> GasName( IGas ) >> Material( MaterNum ).GasFract( IGas ) >> Material( MaterNum ).GasWght( IGas ) >> Material( MaterNum ).GasCon( _, IGas ) >> Material( MaterNum ).GasVis( _, IGas ) >> Material( MaterNum ).GasCp( _, IGas );
 						// Nominal resistance of gap at room temperature (based on first gas in mixture)
-						NominalR( MaterNum ) = Material( MaterNum ).Thickness / ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 1, 2 ) * 300.0 + Material( MaterNum ).GasCon( 1, 3 ) * 90000.0 );
+						NominalR( MaterNum ) = Material( MaterNum ).Thickness / ( Material( MaterNum ).GasCon( 1, 1 ) + Material( MaterNum ).GasCon( 2, 1 ) * 300.0 + Material( MaterNum ).GasCon( 3, 1 ) * 90000.0 );
 					}
 				}
 			}
@@ -5801,8 +5891,8 @@ Label20: ;
 				Construct( ConstrNum ).TotSolidLayers = NGlass( IGlSys );
 
 				for ( IGlass = 1; IGlass <= NGlass( IGlSys ); ++IGlass ) {
-					Construct( ConstrNum ).LayerPoint( 2 * IGlass - 1 ) = MaterNumSysGlass( IGlSys, IGlass );
-					if ( IGlass < NGlass( IGlSys ) ) Construct( ConstrNum ).LayerPoint( 2 * IGlass ) = MaterNumSysGap( IGlSys, IGlass );
+					Construct( ConstrNum ).LayerPoint( 2 * IGlass - 1 ) = MaterNumSysGlass( IGlass, IGlSys );
+					if ( IGlass < NGlass( IGlSys ) ) Construct( ConstrNum ).LayerPoint( 2 * IGlass ) = MaterNumSysGap( IGlass, IGlSys );
 				}
 
 				Construct( ConstrNum ).OutsideRoughness = VerySmooth;
@@ -5850,12 +5940,12 @@ Label20: ;
 				for ( IGlass = 1; IGlass <= NGlass( IGlSys ); ++IGlass ) {
 					{ IOFlags flags; gio::read( W5DataFileNum, fmtA, flags ) >> NextLine; ReadStat = flags.ios(); }
 					++FileLineCount;
-					{ IOFlags flags; gio::read( NextLine.substr( 5 ), "*", flags ) >> AbsSol( IGlass, _ ); ReadStat = flags.ios(); }
+					{ IOFlags flags; gio::read( NextLine.substr( 5 ), "*", flags ) >> AbsSol( _, IGlass ); ReadStat = flags.ios(); }
 					if ( ReadStat != 0 ) {
 						ShowSevereError( "HeatBalanceManager: SearchWindow5DataFile: Error in Read of AbsSol values. For Glass=" + TrimSigDigits( IGlass ) );
 						ShowContinueError( "Line (~" + TrimSigDigits( FileLineCount ) + ") in error (first 100 characters)=" + NextLine.substr( 0, 100 ) );
 						ErrorsFound = true;
-					} else if ( any_lt( AbsSol( IGlass, _ ), 0.0 ) || any_gt( AbsSol( IGlass, _ ), 1.0 ) ) {
+					} else if ( any_lt( AbsSol( _, IGlass ), 0.0 ) || any_gt( AbsSol( _, IGlass ), 1.0 ) ) {
 						ShowSevereError( "HeatBalanceManager: SearchWindow5DataFile: Error in Read of AbsSol values. (out of range [0,1]) For Glass=" + TrimSigDigits( IGlass ) );
 						ShowContinueError( "Line (~" + TrimSigDigits( FileLineCount ) + ") in error (first 100 characters)=" + NextLine.substr( 0, 100 ) );
 						ErrorsFound = true;
@@ -5930,7 +6020,7 @@ Label20: ;
 				W5LsqFit( CosPhiIndepVar, Tvis, 6, 1, 10, Construct( ConstrNum ).TransVisBeamCoef );
 				W5LsqFit( CosPhiIndepVar, Rfsol, 6, 1, 10, Construct( ConstrNum ).ReflSolBeamFrontCoef );
 				for ( IGlass = 1; IGlass <= NGlass( IGlSys ); ++IGlass ) {
-					W5LsqFit( CosPhiIndepVar, AbsSol( IGlass, _ ), 6, 1, 10, Construct( ConstrNum ).AbsBeamCoef( IGlass, _ ) );
+					W5LsqFit( CosPhiIndepVar, AbsSol( _, IGlass ), 6, 1, 10, Construct( ConstrNum ).AbsBeamCoef( _, IGlass ) );
 				}
 
 				// For comparing fitted vs. input distribution in incidence angle
@@ -5938,11 +6028,11 @@ Label20: ;
 					Phi = double( IPhi - 1 ) * 10.0;
 					CosPhi = std::cos( Phi * DegToRadians );
 					if ( std::abs( CosPhi ) < 0.0001 ) CosPhi = 0.0;
-					tsolFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).TransSolBeamCoef( {1,6} ) );
-					tvisFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).TransVisBeamCoef( {1,6} ) );
-					rfsolFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).ReflSolBeamFrontCoef( {1,6} ) );
+					tsolFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).TransSolBeamCoef );
+					tvisFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).TransVisBeamCoef );
+					rfsolFit( IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).ReflSolBeamFrontCoef );
 					for ( IGlass = 1; IGlass <= NGlass( IGlSys ); ++IGlass ) {
-						solabsFit( IPhi, IGlass ) = POLYF( CosPhi, Construct( ConstrNum ).AbsBeamCoef( IGlass, {1,6} ) );
+						solabsFit( IGlass, IPhi ) = POLYF( CosPhi, Construct( ConstrNum ).AbsBeamCoef( {1,6}, IGlass ) );
 					}
 				}
 				// end
@@ -5956,7 +6046,7 @@ Label20: ;
 						NominalRforNominalUCalculation( ConstrNum ) += Material( MatNum ).Thickness / Material( MatNum ).Conductivity;
 					} else if ( Material( MatNum ).Group == WindowGas || Material( MatNum ).Group == WindowGasMixture ) {
 						// If mixture, use conductivity of first gas in mixture
-						NominalRforNominalUCalculation( ConstrNum ) += Material( MatNum ).Thickness / ( Material( MatNum ).GasCon( 1, 1 ) + Material( MatNum ).GasCon( 1, 2 ) * 300.0 + Material( MatNum ).GasCon( 1, 3 ) * 90000.0 );
+						NominalRforNominalUCalculation( ConstrNum ) += Material( MatNum ).Thickness / ( Material( MatNum ).GasCon( 1, 1 ) + Material( MatNum ).GasCon( 2, 1 ) * 300.0 + Material( MatNum ).GasCon( 3, 1 ) * 90000.0 );
 					}
 				}
 
@@ -6156,8 +6246,8 @@ Label1000: ;
 		int ConstructNumAlpha; // Number of construction alpha names being passed
 		int DummyNumProp; // dummy variable for properties being passed
 		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string ConstructAlphas( 1 ); // Construction Alpha names defined
-		FArray1D< Real64 > DummyProps( 4 ); // Temporary array to transfer construction properties
+		Array1D_string ConstructAlphas( 1 ); // Construction Alpha names defined
+		Array1D< Real64 > DummyProps( 4 ); // Temporary array to transfer construction properties
 		bool ErrorInName;
 		bool IsBlank;
 		int Loop;
@@ -6179,7 +6269,7 @@ Label1000: ;
 		int iFCConcreteLayer; // Layer pointer to the materials array
 
 		// First get the concrete layer
-		iFCConcreteLayer = FindItemInList( "~FC_Concrete", Material.Name(), TotMaterials );
+		iFCConcreteLayer = FindItemInList( "~FC_Concrete", Material );
 		Rcon = Material( iFCConcreteLayer ).Resistance;
 
 		// Count number of constructions defined with Ffactor or Cfactor method
@@ -6197,7 +6287,7 @@ Label1000: ;
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( ConstructAlphas( 1 ), Construct.Name(), ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( ConstructAlphas( 1 ), Construct, ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -6241,7 +6331,7 @@ Label1000: ;
 			Construct( ConstrNum ).LayerPoint( 2 ) = iFCConcreteLayer;
 
 			// The fictitious insulation is the outside layer
-			MaterNum = FindItemInList( "~FC_Insulation_" + RoundSigDigits( Loop ), Material.Name(), TotMaterials );
+			MaterNum = FindItemInList( "~FC_Insulation_" + RoundSigDigits( Loop ), Material );
 			Construct( ConstrNum ).LayerPoint( 1 ) = MaterNum;
 
 			// Calculate the thermal resistance of the fictitious insulation layer
@@ -6277,7 +6367,7 @@ Label1000: ;
 
 			ErrorInName = false;
 			IsBlank = false;
-			VerifyName( ConstructAlphas( 1 ), Construct.Name(), ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( ConstructAlphas( 1 ), Construct, ConstrNum, ErrorInName, IsBlank, CurrentModuleObject + " Name" );
 			if ( ErrorInName ) {
 				ErrorsFound = true;
 				continue;
@@ -6313,7 +6403,7 @@ Label1000: ;
 			Construct( ConstrNum ).LayerPoint( 2 ) = iFCConcreteLayer;
 
 			// The fictitious insulation is the outside layer
-			MaterNum = FindItemInList( "~FC_Insulation_" + RoundSigDigits( Loop + TotFfactorConstructs ), Material.Name(), TotMaterials );
+			MaterNum = FindItemInList( "~FC_Insulation_" + RoundSigDigits( Loop + TotFfactorConstructs ), Material );
 			Construct( ConstrNum ).LayerPoint( 1 ) = MaterNum;
 
 			// CR 8886 Rsoil should be in SI unit. From ASHRAE 90.1-2010 SI
@@ -6406,7 +6496,6 @@ Label1000: ;
 		int ScheduleNum;
 		int i;
 		int NumOfScheduledLayers;
-		int NumOfConstrLayers;
 		bool NumOfLayersMatch;
 		int iZone;
 
@@ -6432,7 +6521,7 @@ Label1000: ;
 				GetObjectItem( cCurrentModuleObject, Loop, cAlphaArgs, NumAlpha, rNumericArgs, NumNumeric, IOStat, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 				ErrorInName = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), SurfIncSolSSG.Name(), Loop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), SurfIncSolSSG, Loop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 				if ( ErrorInName ) {
 					ShowContinueError( "...each SurfaceProperty:SolarIncidentInside name must not duplicate other SurfaceProperty:SolarIncidentInside name" );
 					ErrorsFound = true;
@@ -6442,7 +6531,7 @@ Label1000: ;
 				SurfIncSolSSG( Loop ).Name = cAlphaArgs( 1 );
 
 				// Assign surface number
-				SurfNum = FindItemInList( cAlphaArgs( 2 ), Surface.Name(), TotSurfaces );
+				SurfNum = FindItemInList( cAlphaArgs( 2 ), Surface );
 				if ( SurfNum == 0 ) {
 					ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 2 ) + " has been found." );
 					ShowContinueError( cAlphaFieldNames( 2 ) + " entered value = \"" + cAlphaArgs( 2 ) + "\" no corresponding surface (ref BuildingSurface:Detailed) has been found in the input file." );
@@ -6452,7 +6541,7 @@ Label1000: ;
 				}
 
 				// Assign construction number
-				ConstrNum = FindItemInList( cAlphaArgs( 3 ), Construct.Name(), TotConstructs );
+				ConstrNum = FindItemInList( cAlphaArgs( 3 ), Construct );
 				if ( ConstrNum == 0 ) {
 					ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 3 ) + " has been found." );
 					ShowContinueError( cAlphaFieldNames( 3 ) + " entered value = \"" + cAlphaArgs( 3 ) + "\" no corresponding construction (ref Construction) has been found in the input file." );
@@ -6488,7 +6577,7 @@ Label1000: ;
 				GetObjectItem( cCurrentModuleObject, Loop, cAlphaArgs, NumAlpha, rNumericArgs, NumNumeric, IOStat, lNumericFieldBlanks, lAlphaFieldBlanks, cAlphaFieldNames, cNumericFieldNames );
 				ErrorInName = false;
 				IsBlank = false;
-				VerifyName( cAlphaArgs( 1 ), FenLayAbsSSG.Name(), Loop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
+				VerifyName( cAlphaArgs( 1 ), FenLayAbsSSG, Loop, ErrorInName, IsBlank, cCurrentModuleObject + " Name" );
 				if ( ErrorInName ) {
 					ShowContinueError( "...each ComplexFenestrationProperty:SolarAbsorbedLayers name must not duplicate other ComplexFenestrationProperty:SolarAbsorbedLayers name" );
 					ErrorsFound = true;
@@ -6498,7 +6587,7 @@ Label1000: ;
 				FenLayAbsSSG( Loop ).Name = cAlphaArgs( 1 );
 
 				// Assign surface number
-				SurfNum = FindItemInList( cAlphaArgs( 2 ), Surface.Name(), TotSurfaces );
+				SurfNum = FindItemInList( cAlphaArgs( 2 ), Surface );
 				if ( SurfNum == 0 ) {
 					ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 2 ) + " has been found." );
 					ShowContinueError( cAlphaFieldNames( 2 ) + " entered value = \"" + cAlphaArgs( 2 ) + "\" no corresponding surface (ref BuildingSurface:Detailed) has been found in the input file." );
@@ -6508,7 +6597,7 @@ Label1000: ;
 				}
 
 				// Assign construction number
-				ConstrNum = FindItemInList( cAlphaArgs( 3 ), Construct.Name(), TotConstructs );
+				ConstrNum = FindItemInList( cAlphaArgs( 3 ), Construct );
 				if ( ConstrNum == 0 ) {
 					ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 3 ) + " has been found." );
 					ShowContinueError( cAlphaFieldNames( 3 ) + " entered value = \"" + cAlphaArgs( 3 ) + "\" no corresponding construction (ref Construction) has been found in the input file." );
@@ -6655,7 +6744,7 @@ Label1000: ;
 	}
 
 	void
-	CreateTCConstructions( bool & ErrorsFound ) // If errors found in input
+	CreateTCConstructions( bool & EP_UNUSED( ErrorsFound ) ) // If errors found in input
 	{
 
 		// SUBROUTINE INFORMATION:
@@ -6969,11 +7058,8 @@ Label1000: ;
 		static std::string const RoutineName( "SetupComplexFenestrationMaterialInput: " );
 
 		// SUBROUTINE LOCAL VARIABLE DECLARATIONS:
-		int IOStat; // IO Status when calling get input subroutine
-		FArray1D_string MaterialNames( 5 ); // Number of Material Alpha names defined
-		int MaterialNumAlpha; // Number of material alpha names being passed
-		int MaterialNumProp; // Number of material properties being passed
-		FArray1D< Real64 > MaterialProps( 27 ); // Temporary array to transfer material properties
+		Array1D_string MaterialNames( 5 ); // Number of Material Alpha names defined
+		Array1D< Real64 > MaterialProps( 27 ); // Temporary array to transfer material properties
 		int Loop;
 		int NumAlphas; // Number of Alphas for each GetObjectItem call
 		int NumNumbers; // Number of Numbers for each GetObjectItem call
@@ -6992,7 +7078,7 @@ Label1000: ;
 			IsBlank = false;
 
 			// Verify unique names
-			VerifyName( cAlphaArgs( 1 ), SupportPillar.Name(), Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), SupportPillar, Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 1 ) + " has been found." );
@@ -7028,7 +7114,7 @@ Label1000: ;
 			IsBlank = false;
 
 			// Verify unique names
-			VerifyName( cAlphaArgs( 1 ), DeflectionState.Name(), Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), DeflectionState, Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 1 ) + " has been found." );
@@ -7057,7 +7143,7 @@ Label1000: ;
 			IsBlank = false;
 
 			// Verify unique names
-			VerifyName( cAlphaArgs( 1 ), Material.Name(), MaterNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), Material, MaterNum - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 1 ) + " has been found." );
@@ -7087,16 +7173,16 @@ Label1000: ;
 			}
 
 			if ( ! lAlphaFieldBlanks( 2 ) ) {
-				Material( MaterNum ).GasPointer = FindItemInList( cAlphaArgs( 2 ), Material.Name(), TotMaterials );
+				Material( MaterNum ).GasPointer = FindItemInList( cAlphaArgs( 2 ), Material );
 			} else {
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 1 ) + " has been found." );
 				ShowContinueError( cCurrentModuleObject + " does not have assigned WindowMaterial:Gas or WindowMaterial:GasMixutre." );
 			}
 			if ( ! lAlphaFieldBlanks( 3 ) ) {
-				Material( MaterNum ).DeflectionStatePtr = FindItemInList( cAlphaArgs( 3 ), DeflectionState.Name(), W7DeflectionStates );
+				Material( MaterNum ).DeflectionStatePtr = FindItemInList( cAlphaArgs( 3 ), DeflectionState );
 			}
 			if ( ! lAlphaFieldBlanks( 4 ) ) {
-				Material( MaterNum ).SupportPillarPtr = FindItemInList( cAlphaArgs( 4 ), SupportPillar.Name(), W7SupportPillars );
+				Material( MaterNum ).SupportPillarPtr = FindItemInList( cAlphaArgs( 4 ), SupportPillar );
 			}
 		}
 
@@ -7115,7 +7201,7 @@ Label1000: ;
 			IsBlank = false;
 
 			// Verify unique names
-			VerifyName( cAlphaArgs( 1 ), ComplexShade.Name(), Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), ComplexShade, Loop, IsNotOK, IsBlank, CurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + cAlphaArgs( 1 ) + ", object. Illegal value for " + cAlphaFieldNames( 1 ) + " has been found." );
@@ -7349,7 +7435,6 @@ Label1000: ;
 		int NBasis; // temporary number of elements in basis
 		int Layer; // loop counter for material layers
 		int AlphaIndex;
-		int ThConstNum; // number of thermal construction
 		int ThermalModelNum; // number of thermal model parameters object
 		int NumOfTotalLayers; // total number of layers in the construction
 		int NumOfOpticalLayers; // number of optical layers in the construction (excluding gasses and gas mixtures)
@@ -7359,12 +7444,12 @@ Label1000: ;
 		// When reading Construction:ComplexFenestrationState, there is a call of GetMatrix2D which also uses same
 		// variables from DataIPShortCuts.  Since this can cause some errors in reading, it is important
 		// to declare local variables for reading Construction:ComplexFenestrationState object(s)
-		FArray1D_string locAlphaFieldNames;
-		FArray1D_string locNumericFieldNames;
-		FArray1D_bool locNumericFieldBlanks;
-		FArray1D_bool locAlphaFieldBlanks;
-		FArray1D_string locAlphaArgs;
-		FArray1D< Real64 > locNumericArgs;
+		Array1D_string locAlphaFieldNames;
+		Array1D_string locNumericFieldNames;
+		Array1D_bool locNumericFieldBlanks;
+		Array1D_bool locAlphaFieldBlanks;
+		Array1D_string locAlphaArgs;
+		Array1D< Real64 > locNumericArgs;
 		std::string locCurrentModuleObject;
 
 		//Reading WindowThermalModel:Params
@@ -7376,7 +7461,7 @@ Label1000: ;
 			GetObjectItem( cCurrentModuleObject, Loop, cAlphaArgs, NumAlphas, rNumericArgs, NumNumbers, IOStatus, lNumericFieldBlanks, _, cAlphaFieldNames, cNumericFieldNames );
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( cAlphaArgs( 1 ), WindowThermalModel.Name(), TotThermalModels - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
+			VerifyName( cAlphaArgs( 1 ), WindowThermalModel, TotThermalModels - 1, IsNotOK, IsBlank, cCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				continue;
@@ -7475,7 +7560,7 @@ Label1000: ;
 			++ConstrNum;
 			IsNotOK = false;
 			IsBlank = false;
-			VerifyName( locAlphaArgs( 1 ), Construct.Name(), ConstrNum - 1, IsNotOK, IsBlank, locCurrentModuleObject + " Name" );
+			VerifyName( locAlphaArgs( 1 ), Construct, ConstrNum - 1, IsNotOK, IsBlank, locCurrentModuleObject + " Name" );
 			if ( IsNotOK ) {
 				ErrorsFound = true;
 				continue;
@@ -7521,7 +7606,7 @@ Label1000: ;
 			}}
 
 			//Simon: Assign thermal model number
-			ThermalModelNum = FindItemInList( locAlphaArgs( 4 ), WindowThermalModel.Name(), TotThermalModels );
+			ThermalModelNum = FindItemInList( locAlphaArgs( 4 ), WindowThermalModel );
 			if ( ThermalModelNum == 0 ) {
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Illegal value for " + locAlphaFieldNames( 4 ) + " has been found." );
 				ShowContinueError( locAlphaFieldNames( 4 ) + " entered value = \"" + locAlphaArgs( 4 ) + "\" no corresponding thermal model (WindowThermalModel:Params) found in the input file." );
@@ -7542,7 +7627,7 @@ Label1000: ;
 				ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Illegal value for " + locAlphaFieldNames( 5 ) + " has been found." );
 				ShowContinueError( locAlphaFieldNames( 5 ) + " entered value=\"" + locAlphaArgs( 5 ) + "\" invalid matrix dimensions.  Basis matrix dimension can only be 2 x 1." );
 			}
-			Construct( ConstrNum ).BSDFInput.BasisMat.allocate( NumRows, NumCols );
+			Construct( ConstrNum ).BSDFInput.BasisMat.allocate( NumCols, NumRows );
 			Get2DMatrix( Construct( ConstrNum ).BSDFInput.BasisMatIndex, Construct( ConstrNum ).BSDFInput.BasisMat );
 			if ( Construct( ConstrNum ).BSDFInput.BasisType == BasisType_WINDOW ) CalculateBasisLength( Construct( ConstrNum ).BSDFInput, ConstrNum, Construct( ConstrNum ).BSDFInput.NBasis );
 
@@ -7593,7 +7678,7 @@ Label1000: ;
 					// matrix defines the basis length
 				}
 
-				Construct( ConstrNum ).BSDFInput.SolFrtTrans.allocate( NumRows, NumCols );
+				Construct( ConstrNum ).BSDFInput.SolFrtTrans.allocate( NumCols, NumRows );
 				if ( Construct( ConstrNum ).BSDFInput.SolFrtTransIndex == 0 ) {
 					ErrorsFound = true;
 					ShowSevereError( RoutineName + locCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7622,7 +7707,7 @@ Label1000: ;
 					ShowContinueError( "Solar bakc reflectance matrix \"" + locAlphaArgs( 7 ) + "\" must have the same number of rows and columns." );
 				}
 
-				Construct( ConstrNum ).BSDFInput.SolBkRefl.allocate( NumRows, NumCols );
+				Construct( ConstrNum ).BSDFInput.SolBkRefl.allocate( NumCols, NumRows );
 				if ( Construct( ConstrNum ).BSDFInput.SolBkReflIndex == 0 ) {
 					ErrorsFound = true;
 					ShowSevereError( RoutineName + locCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7651,7 +7736,7 @@ Label1000: ;
 					ShowContinueError( "Visible front transmittance matrix \"" + locAlphaArgs( 8 ) + "\" must have the same number of rows and columns." );
 				}
 
-				Construct( ConstrNum ).BSDFInput.VisFrtTrans.allocate( NumRows, NumCols );
+				Construct( ConstrNum ).BSDFInput.VisFrtTrans.allocate( NumCols, NumRows );
 				if ( Construct( ConstrNum ).BSDFInput.VisFrtTransIndex == 0 ) {
 					ErrorsFound = true;
 					ShowSevereError( RoutineName + cCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7680,7 +7765,7 @@ Label1000: ;
 					ShowContinueError( "Visible back reflectance \"" + locAlphaArgs( 9 ) + "\" must have the same number of rows and columns." );
 				}
 
-				Construct( ConstrNum ).BSDFInput.VisBkRefl.allocate( NumRows, NumCols );
+				Construct( ConstrNum ).BSDFInput.VisBkRefl.allocate( NumCols, NumRows );
 				if ( Construct( ConstrNum ).BSDFInput.VisBkReflIndex == 0 ) {
 					ErrorsFound = true;
 					ShowSevereError( RoutineName + locCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7694,7 +7779,7 @@ Label1000: ;
 					AlphaIndex = 9 + ( Layer * 3 ) - 2;
 					currentOpticalLayer = int( Layer / 2 ) + 1;
 					//Material info is contained in the thermal construct
-					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( locAlphaArgs( AlphaIndex ), Material.Name(), TotMaterials );
+					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( locAlphaArgs( AlphaIndex ), Material );
 
 					//Simon: Load only if optical layer
 					if ( mod( Layer, 2 ) != 0 ) {
@@ -7721,7 +7806,7 @@ Label1000: ;
 						}
 
 						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).AbsNcols = NumCols;
-						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbs.allocate( NumRows, NumCols );
+						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbs.allocate( NumCols, NumRows );
 						if ( Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbsIndex == 0 ) {
 							ErrorsFound = true;
 							ShowSevereError( RoutineName + locCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7750,7 +7835,7 @@ Label1000: ;
 							ShowContinueError( "Matrix has " + RoundSigDigits( NumCols ) + " number of columns, while basis definition specifies " + RoundSigDigits( NBasis ) + " number of columns." );
 						}
 
-						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbs.allocate( NumRows, NumCols );
+						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbs.allocate( NumCols, NumRows );
 						if ( Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbsIndex == 0 ) {
 							ErrorsFound = true;
 							ShowSevereError( RoutineName + locCurrentModuleObject + "=\"" + locAlphaArgs( 1 ) + ", object. Referenced Matrix:TwoDimension is missing from the input file." );
@@ -7764,7 +7849,7 @@ Label1000: ;
 			} else {
 				//Axisymmetric basis
 				NBasis = Construct( ConstrNum ).BSDFInput.NBasis; //Basis length has already been calculated
-				BSDFTempMtrx.allocate( 1, NBasis );
+				BSDFTempMtrx.allocate( NBasis, 1 );
 
 				// *******************************************************************************
 				// Solar front transmittance
@@ -7796,7 +7881,7 @@ Label1000: ;
 
 					Construct( ConstrNum ).BSDFInput.SolFrtTrans = 0.0;
 					for ( I = 1; I <= NBasis; ++I ) {
-						Construct( ConstrNum ).BSDFInput.SolFrtTrans( I, I ) = BSDFTempMtrx( 1, I );
+						Construct( ConstrNum ).BSDFInput.SolFrtTrans( I, I ) = BSDFTempMtrx( I, 1 );
 					}
 				}
 
@@ -7829,7 +7914,7 @@ Label1000: ;
 					Get2DMatrix( Construct( ConstrNum ).BSDFInput.SolBkReflIndex, BSDFTempMtrx );
 					Construct( ConstrNum ).BSDFInput.SolBkRefl = 0.0;
 					for ( I = 1; I <= NBasis; ++I ) {
-						Construct( ConstrNum ).BSDFInput.SolBkRefl( I, I ) = BSDFTempMtrx( 1, I );
+						Construct( ConstrNum ).BSDFInput.SolBkRefl( I, I ) = BSDFTempMtrx( I, 1 );
 					}
 				}
 
@@ -7862,7 +7947,7 @@ Label1000: ;
 					Get2DMatrix( Construct( ConstrNum ).BSDFInput.VisFrtTransIndex, BSDFTempMtrx );
 					Construct( ConstrNum ).BSDFInput.VisFrtTrans = 0.0;
 					for ( I = 1; I <= NBasis; ++I ) {
-						Construct( ConstrNum ).BSDFInput.VisFrtTrans( I, I ) = BSDFTempMtrx( 1, I );
+						Construct( ConstrNum ).BSDFInput.VisFrtTrans( I, I ) = BSDFTempMtrx( I, 1 );
 					}
 				}
 
@@ -7895,7 +7980,7 @@ Label1000: ;
 					Get2DMatrix( Construct( ConstrNum ).BSDFInput.VisBkReflIndex, BSDFTempMtrx );
 					Construct( ConstrNum ).BSDFInput.VisBkRefl = 0.0;
 					for ( I = 1; I <= NBasis; ++I ) {
-						Construct( ConstrNum ).BSDFInput.VisBkRefl( I, I ) = BSDFTempMtrx( 1, I );
+						Construct( ConstrNum ).BSDFInput.VisBkRefl( I, I ) = BSDFTempMtrx( I, 1 );
 					}
 				}
 
@@ -7914,7 +7999,7 @@ Label1000: ;
 					AlphaIndex = 9 + ( Layer * 3 ) - 2;
 					currentOpticalLayer = int( Layer / 2 ) + 1;
 
-					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( locAlphaArgs( AlphaIndex ), Material.Name(), TotMaterials );
+					Construct( ConstrNum ).LayerPoint( Layer ) = FindItemInList( locAlphaArgs( AlphaIndex ), Material );
 
 					if ( mod( Layer, 2 ) != 0 ) {
 						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).MaterialIndex = Construct( ConstrNum ).LayerPoint( Layer );
@@ -7940,7 +8025,7 @@ Label1000: ;
 						}
 
 						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).AbsNcols = NumCols;
-						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbs.allocate( NumRows, NumCols );
+						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbs.allocate( NumCols, NumRows );
 
 						if ( Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).FrtAbsIndex == 0 ) {
 							ErrorsFound = true;
@@ -7970,7 +8055,7 @@ Label1000: ;
 							ShowContinueError( "Matrix has " + RoundSigDigits( NumCols ) + " number of columns, while basis definition specifies " + RoundSigDigits( NBasis ) + " number of columns." );
 						}
 
-						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbs.allocate( NumRows, NumCols );
+						Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbs.allocate( NumCols, NumRows );
 
 						if ( Construct( ConstrNum ).BSDFInput.Layer( currentOpticalLayer ).BkAbsIndex == 0 ) {
 							ErrorsFound = true;
@@ -8004,7 +8089,7 @@ Label1000: ;
 
 	//     NOTICE
 
-	//     Copyright © 1996-2014 The Board of Trustees of the University of Illinois
+	//     Copyright (c) 1996-2015 The Board of Trustees of the University of Illinois
 	//     and The Regents of the University of California through Ernest Orlando Lawrence
 	//     Berkeley National Laboratory.  All rights reserved.
 
